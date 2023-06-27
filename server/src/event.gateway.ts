@@ -20,7 +20,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
             id: client.id,
             x: 0,
             y: 0,
-            isDrawing: false
+            isDrawing: false,
+            color: "#000000",
+            width: 1
         };
         this.userRepository.pushUser(newUser);
         client.broadcast.emit('connected', { userData: newUser });

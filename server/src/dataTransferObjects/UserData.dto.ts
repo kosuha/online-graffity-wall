@@ -3,4 +3,6 @@ export class UserData {
     x: number;
     y: number;
     isDrawing: boolean;
+    color: string;
+    width: number;
 }
