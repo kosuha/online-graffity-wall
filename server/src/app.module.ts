@@ -5,6 +5,7 @@ import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { EventsGateway } from './event.gateway';
 import { ImageRepository } from './image.repository';
+import { UserRepository } from './user.repository';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { ImageRepository } from './image.repository';
   providers: [
     AppService,
     EventsGateway,
-    ImageRepository
+    ImageRepository,
+    UserRepository
   ],
 })
 export class AppModule {}

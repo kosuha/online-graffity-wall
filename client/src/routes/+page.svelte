@@ -28,37 +28,19 @@
         context = canvas.getContext("2d") as CanvasRenderingContext2D;
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
 
-        fetch('/image', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then((data) => {
-            let dataURL = data.image;          
-            let img = new Image();
-            img.src = dataURL;
-
-            // 이미지 로딩이 완료되면 캔버스에 그림
-            img.onload = function() {
-                context.drawImage(img, 0, 0);
-            };
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+        getImage();
+        getUsers();
 
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
 
         $socketStore.on("connected", (data) => {
-            users.push({ id: data.id, x: 0, y: 0, isDrawing: false });
+            users.push(data.userData);
         })
 
         $socketStore.on("disconnected", (data) => {
-            users = users.filter(user => user.id !== data.id);
+            users = users.filter(user => user.id !== data.userData.id);
         })
 
         $socketStore.on("mousemove", (data) => {
@@ -148,8 +130,6 @@
             context.moveTo(myData.x, myData.y);
             context.lineTo(e.clientX - canvasMouse.offsetLeft + window.scrollX, e.clientY - canvasMouse.offsetTop + window.scrollY);
             context.stroke();
-
-            $socketStore.emit('save', )
         }
         
         const data: UserData = {
@@ -170,6 +150,45 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ image: dataURL })
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    const getImage = () => {
+        fetch('/image', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then((data) => {
+            let dataURL = data.image;          
+            let img = new Image();
+            img.src = dataURL;
+
+            // 이미지 로딩이 완료되면 캔버스에 그림
+            img.onload = function() {
+                context.drawImage(img, 0, 0);
+            };
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    const getUsers = () => {
+        fetch('/users', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then((data) => {
+            users = data.users as UserData[];
         })
         .catch((error) => {
             console.error('Error:', error);

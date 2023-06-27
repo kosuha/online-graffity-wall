@@ -7,16 +7,29 @@ import {
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { UserData } from './dataTransferObjects/UserData.dto';
+import { UserRepository } from './user.repository';
 
 @WebSocketGateway()
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    constructor (
+        private readonly userRepository: UserRepository,
+    ) {}
 
     handleConnection(client: Socket, ...args: any[]) {
-        client.broadcast.emit('connected', { id: client.id });
+        let newUser: UserData = {
+            id: client.id,
+            x: 0,
+            y: 0,
+            isDrawing: false
+        };
+        this.userRepository.pushUser(newUser);
+        client.broadcast.emit('connected', { userData: newUser });
     }
 
     handleDisconnect(client: Socket) {
-        client.broadcast.emit('disconnected', { id: client.id });
+        let user: UserData = this.userRepository.getUserById(client.id);
+        this.userRepository.popUser(user);
+        client.broadcast.emit('disconnected', { userData: user });
     }
 
     @SubscribeMessage('mousemove')
