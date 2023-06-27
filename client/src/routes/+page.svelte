@@ -7,6 +7,8 @@
         x: number;
         y: number;
         isDrawing: boolean;
+        color: string;
+        width: number;
     }
     
     let canvas: HTMLCanvasElement;
@@ -18,7 +20,9 @@
         id: $socketStore.id,
         x: 0,
         y: 0,
-        isDrawing: false
+        isDrawing: false,
+        color: "#000000",
+        width: 1
     };
     let users: UserData[] = [];
 
@@ -50,7 +54,8 @@
                         context.beginPath()
                         context.lineJoin = 'round';
                         context.lineCap = 'round';
-                        context.lineWidth = 10;
+                        context.lineWidth = users[i].width;
+                        context.strokeStyle = users[i].color;
                         context.moveTo(users[i].x, users[i].y);
                         context.lineTo(data.userData.x, data.userData.y);
                         context.stroke();
@@ -70,7 +75,8 @@
                     context.beginPath()
                     context.lineJoin = 'round';
                     context.lineCap = 'round';
-                    context.lineWidth = 10;
+                    context.lineWidth = users[i].width;
+                    context.strokeStyle = users[i].color;
                     context.moveTo(users[i].x, users[i].y);
                     context.lineTo(data.userData.x, data.userData.y);
                     context.stroke();
@@ -97,9 +103,14 @@
         users.forEach(user => {
             contextMouse.fillStyle = "yellow";
             contextMouse.fillRect(user.x, user.y, 10, 10);
+            
         });
-        contextMouse.fillStyle = "green";
-        contextMouse.fillRect(myData.x, myData.y, 10, 10);
+        // contextMouse.fillRect(myData.x, myData.y, 10, 10);
+        contextMouse.beginPath()
+        contextMouse.arc(myData.x, myData.y, myData.width / 2, 0, Math.PI * 2);
+        contextMouse.fillStyle = myData.color;
+        contextMouse.fill();
+        contextMouse.closePath();
     }
 
     const mouseDownEvent = (e: MouseEvent) => {
@@ -109,7 +120,8 @@
         context.beginPath()
         context.lineJoin = 'round';
         context.lineCap = 'round';
-        context.lineWidth = 10;
+        context.lineWidth = myData.width;
+        context.strokeStyle = myData.color;
         context.moveTo(myData.x, myData.y);
         context.lineTo(myData.x, myData.y);
         context.stroke();
@@ -126,7 +138,8 @@
             context.beginPath()
             context.lineJoin = 'round';
             context.lineCap = 'round';
-            context.lineWidth = 10;
+            context.lineWidth = myData.width;
+            context.strokeStyle = myData.color;
             context.moveTo(myData.x, myData.y);
             context.lineTo(e.clientX - canvasMouse.offsetLeft + window.scrollX, e.clientY - canvasMouse.offsetTop + window.scrollY);
             context.stroke();
@@ -136,7 +149,9 @@
             id: $socketStore.id,
             x: e.clientX - canvasMouse.offsetLeft + window.scrollX,
             y: e.clientY - canvasMouse.offsetTop + window.scrollY,
-            isDrawing: myData.isDrawing
+            isDrawing: myData.isDrawing,
+            color: myData.color,
+            width: myData.width
         }
         $socketStore.emit("mousemove", data);
         myData = data;
@@ -194,31 +209,78 @@
             console.error('Error:', error);
         });
     }
+
+    const colorButtonEvent = () => {
+        const picker = document.getElementById("color-picker") as HTMLInputElement;
+        picker.click();
+    };
 </script>
 
 <svelte:head>
     <title>
         Online Graffity Wall
     </title>
+    <script src="https://unpkg.com/vanilla-picker@2.10.1"></script>
 </svelte:head>
 
 <canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
 <canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
+<div id="palette">
+    <input id="color-picker" type="color" bind:value={myData.color} style="display: none;" />
+    <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
+    <input id="range" type="range" min=1 max=50 bind:value={myData.width} style="accent-color: {myData.color};">
+</div>
 
 <style>
     #canvas, #canvas-mouse {
         position: absolute;
         top: 0;
         left: 0;
-        margin: 10px;
+        margin: 0px;
     }
 
     #canvas {
-        border: 1px solid black;
+        z-index: 1;
     }
 
     #canvas-mouse {
         background-color: rgba(255, 255, 255, 0);
-        z-index: 999;
+        z-index: 2;
     }
+
+    #palette {
+        position: fixed;
+        z-index: 3;
+        background-color: rgba(47, 47, 47, 0.523);
+        border: 1px solid black;
+        padding: 10px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    #color-picker-button {
+        width: 30px;
+        height: 30px;
+        border: none;
+        padding: 1px;
+        margin-right: 10px;
+        border-radius: 20px;
+    }
+
+    #color-picker {
+        position: fixed;
+        top: 50px;
+    }
+
+    #range {
+        height: 5px;
+        background: white;
+        border-radius: 10px;
+        outline: none;
+        -webkit-appearance: none;
+        accent-color: #000000;
+    }
+
 </style>
