@@ -13,12 +13,22 @@ export class UserRepository {
         for (let i = 0; i < this.users.length; i++) {
             if (data.id === this.users[i].id) {
                 this.users.splice(i, 1);
+                return ;
             }
         }
     }
 
     getUsers(): UserData[] {
         return this.users;
+    }
+
+    updateUser(userData: UserData): void {
+        for (let i = 0; i < this.users.length; i++) {
+            if (userData.id === this.users[i].id) {
+                this.users[i] = userData;
+                return ;
+            }
+        }
     }
 
     getUserById(id: string): UserData {

@@ -21,4 +21,8 @@ export class AppService {
   getUsers(): UserData[] {
     return this.userRepository.getUsers();
   }
+
+  updateUser(userData: UserData): void {
+    this.userRepository.updateUser(userData);
+  }
 }

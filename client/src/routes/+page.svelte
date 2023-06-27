@@ -61,8 +61,7 @@
                         context.stroke();
                     }
 
-                    users[i].x = data.userData.x;
-                    users[i].y = data.userData.y;
+                    users[i] = data.userData;
                     return ;
                 }
             }
@@ -80,6 +79,8 @@
                     context.moveTo(users[i].x, users[i].y);
                     context.lineTo(data.userData.x, data.userData.y);
                     context.stroke();
+
+                    users[i] = data.userData;
                     return ;
                 }
             }
@@ -88,7 +89,7 @@
         $socketStore.on("mouseup", (data) => {
             for (let i = 0; i < users.length; i++) {
                 if (users[i].id === data.userData.id) {
-                    users[i].isDrawing = false;
+                    users[i] = data.userData;
                     return ;
                 }
             }
@@ -101,11 +102,14 @@
     const draw = () => {
         contextMouse.clearRect(0, 0, canvasMouse.width, canvasMouse.height);
         users.forEach(user => {
-            contextMouse.fillStyle = "yellow";
-            contextMouse.fillRect(user.x, user.y, 10, 10);
+            contextMouse.beginPath()
+            contextMouse.arc(user.x, user.y, 5, 0, Math.PI * 2);
+            contextMouse.strokeStyle = "black";
+            contextMouse.lineWidth = 3;
+            contextMouse.stroke();
+            contextMouse.closePath();
             
         });
-        // contextMouse.fillRect(myData.x, myData.y, 10, 10);
         contextMouse.beginPath()
         contextMouse.arc(myData.x, myData.y, myData.width / 2, 0, Math.PI * 2);
         contextMouse.fillStyle = myData.color;
@@ -223,8 +227,8 @@
     <script src="https://unpkg.com/vanilla-picker@2.10.1"></script>
 </svelte:head>
 
-<canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
-<canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
+<canvas id="canvas-mouse" bind:this={canvasMouse} width="3000" height="3000"></canvas>
+<canvas id="canvas" bind:this={canvas} width="3000" height="3000"></canvas>
 <div id="palette">
     <input id="color-picker" type="color" bind:value={myData.color} style="display: none;" />
     <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
@@ -237,10 +241,12 @@
         top: 0;
         left: 0;
         margin: 0px;
+        box-sizing: border-box;
     }
 
     #canvas {
         z-index: 1;
+        border: 1px solid rgba(0, 0, 0, 0.5);
     }
 
     #canvas-mouse {
@@ -251,7 +257,7 @@
     #palette {
         position: fixed;
         z-index: 3;
-        background-color: rgba(47, 47, 47, 0.523);
+        background-color: rgba(47, 47, 47, 0.5);
         border: 1px solid black;
         padding: 10px;
         border-radius: 10px;
