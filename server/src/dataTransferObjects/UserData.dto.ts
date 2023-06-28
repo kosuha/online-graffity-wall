@@ -1,7 +1,8 @@
+import { Position } from "./Position.dto";
+
 export class UserData {
     id: string;
-    x: number;
-    y: number;
+    pos: Position;
     isDrawing: boolean;
     color: string;
     width: number;

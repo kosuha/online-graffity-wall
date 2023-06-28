@@ -7,14 +7,9 @@ export class AppController {
     private readonly appService: AppService,
     ) {}
 
-  @Post('/image')
-  postImage(@Req() req: Request): void {
-    this.appService.saveImage((req.body as any).image);
-  }
-
   @Get('/image')
-  getImage(): Object {
-    return { image: this.appService.getImage() };
+  async getImage(): Promise<Object> {
+    return { image: await this.appService.getImage() };
   }
 
   @Get('/users')

@@ -1,14 +1,26 @@
 <script lang="ts">
-    import { onMount, afterUpdate } from "svelte";
+    import { onMount } from "svelte";
     import { socketStore } from "../store";
 
     interface UserData {
         id: string;
-        x: number;
-        y: number;
+        pos: Position;
         isDrawing: boolean;
         color: string;
         width: number;
+    }
+
+    interface Position {
+        x: number;
+        y: number;
+    }
+
+    interface Draw {
+        id: string;
+        width: number;
+        color: string;
+        from: Position;
+        to: Position;
     }
     
     let canvas: HTMLCanvasElement;
@@ -18,8 +30,7 @@
 
     let myData: UserData = {
         id: $socketStore.id,
-        x: 0,
-        y: 0,
+        pos: { x: 0, y: 0 },
         isDrawing: false,
         color: "#000000",
         width: 1
@@ -39,71 +50,35 @@
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
 
-        $socketStore.on("connected", (data) => {
-            users.push(data.userData);
+        $socketStore.on("connected", (data: UserData) => {
+            users.push(data);
         })
 
-        $socketStore.on("disconnected", (data) => {
-            users = users.filter(user => user.id !== data.userData.id);
+        $socketStore.on("disconnected", (data: UserData) => {
+            users = users.filter(user => user.id !== data.id);
         })
 
-        $socketStore.on("mousemove", (data) => {
+        $socketStore.on("mousemove", (data: any) => {
+            if (data.draw !== undefined) {
+                drawLine(data.draw);
+            }
             for (let i = 0; i < users.length; i++) {
-                if (users[i].id === data.userData.id) {
-                    if (users[i].isDrawing) {
-                        context.beginPath()
-                        context.lineJoin = 'round';
-                        context.lineCap = 'round';
-                        context.lineWidth = users[i].width;
-                        context.strokeStyle = users[i].color;
-                        context.moveTo(users[i].x, users[i].y);
-                        context.lineTo(data.userData.x, data.userData.y);
-                        context.stroke();
-                    }
-
-                    users[i] = data.userData;
+                if (users[i].id === data.user.id) {
+                    users[i] = data.user;
                     return ;
                 }
             }
         })
 
-        $socketStore.on("mousedown", (data) => {
-            for (let i = 0; i < users.length; i++) {
-                if (users[i].id === data.userData.id) {
-                    users[i].isDrawing = true;
-                    context.beginPath()
-                    context.lineJoin = 'round';
-                    context.lineCap = 'round';
-                    context.lineWidth = users[i].width;
-                    context.strokeStyle = users[i].color;
-                    context.moveTo(users[i].x, users[i].y);
-                    context.lineTo(data.userData.x, data.userData.y);
-                    context.stroke();
-
-                    users[i] = data.userData;
-                    return ;
-                }
-            }
-        })
-
-        $socketStore.on("mouseup", (data) => {
-            for (let i = 0; i < users.length; i++) {
-                if (users[i].id === data.userData.id) {
-                    users[i] = data.userData;
-                    return ;
-                }
-            }
-        })
-
-        setInterval(draw, 0.1);
+        setInterval(drawMouse, 0.1);
     });
 
     // 마우스 그리기
-    const draw = () => {
+    const drawMouse = () => {
         contextMouse.clearRect(0, 0, canvasMouse.width, canvasMouse.height);
         users.forEach(user => {
             contextMouse.beginPath()
-            contextMouse.arc(user.x, user.y, 5, 0, Math.PI * 2);
+            contextMouse.arc(user.pos.x, user.pos.y, 5, 0, Math.PI * 2);
             contextMouse.strokeStyle = "black";
             contextMouse.lineWidth = 3;
             contextMouse.stroke();
@@ -111,68 +86,68 @@
             
         });
         contextMouse.beginPath()
-        contextMouse.arc(myData.x, myData.y, myData.width / 2, 0, Math.PI * 2);
+        contextMouse.arc(myData.pos.x, myData.pos.y, myData.width / 2, 0, Math.PI * 2);
         contextMouse.fillStyle = myData.color;
         contextMouse.fill();
         contextMouse.closePath();
     }
 
     const mouseDownEvent = (e: MouseEvent) => {
-        $socketStore.emit('mousedown', myData);
         myData.isDrawing = true;
 
-        context.beginPath()
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        context.lineWidth = myData.width;
-        context.strokeStyle = myData.color;
-        context.moveTo(myData.x, myData.y);
-        context.lineTo(myData.x, myData.y);
-        context.stroke();
-    }
-
-    const mouseUpEvent = (e: MouseEvent) => {
-        $socketStore.emit('mouseup', myData);
-        myData.isDrawing = false;
-        saveImage();
-    }
-
-    const mouseMoveEvent = (e: MouseEvent) => {
-        if (myData.isDrawing) {
-            context.beginPath()
-            context.lineJoin = 'round';
-            context.lineCap = 'round';
-            context.lineWidth = myData.width;
-            context.strokeStyle = myData.color;
-            context.moveTo(myData.x, myData.y);
-            context.lineTo(e.clientX - canvasMouse.offsetLeft + window.scrollX, e.clientY - canvasMouse.offsetTop + window.scrollY);
-            context.stroke();
-        }
-        
         const data: UserData = {
             id: $socketStore.id,
-            x: e.clientX - canvasMouse.offsetLeft + window.scrollX,
-            y: e.clientY - canvasMouse.offsetTop + window.scrollY,
+            pos: { x: myData.pos.x, y: myData.pos.y },
             isDrawing: myData.isDrawing,
             color: myData.color,
             width: myData.width
         }
-        $socketStore.emit("mousemove", data);
-        myData = data;
+
+        const draw: Draw = {
+            id: myData.id,
+            width: myData.width,
+            color: myData.color,
+            from: { x: myData.pos.x, y: myData.pos.y },
+            to: { x: myData.pos.x, y: myData.pos.y }
+        }
+
+        drawLine(draw);
+        $socketStore.emit("mousemove", { user: data, draw: draw });
     }
 
-    const saveImage = () => {
-        let dataURL = canvas.toDataURL('image/png') as string;
-        fetch('/image', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+    const mouseUpEvent = (e: MouseEvent) => {
+        myData.isDrawing = false;
+    }
+
+    const mouseMoveEvent = (e: MouseEvent) => {
+        const data: UserData = {
+            id: $socketStore.id,
+            pos: {
+                x: e.clientX - canvasMouse.offsetLeft + window.scrollX,
+                y: e.clientY - canvasMouse.offsetTop + window.scrollY
             },
-            body: JSON.stringify({ image: dataURL })
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+            isDrawing: myData.isDrawing,
+            color: myData.color,
+            width: myData.width
+        }
+
+        if (myData.isDrawing) {
+            const draw: Draw = {
+                id: myData.id,
+                width: myData.width,
+                color: myData.color,
+                from: { x: myData.pos.x, y: myData.pos.y },
+                to: {
+                    x: e.clientX - canvasMouse.offsetLeft + window.scrollX, 
+                    y: e.clientY - canvasMouse.offsetTop + window.scrollY
+                }
+            }
+            drawLine(draw);
+            $socketStore.emit("mousemove", { user: data, draw: draw });
+        } else {
+            $socketStore.emit("mousemove", { user: data, draw: undefined });
+        }
+        myData = data;
     }
 
     const getImage = () => {
@@ -184,14 +159,9 @@
         })
         .then(response => response.json())
         .then((data) => {
-            let dataURL = data.image;          
-            let img = new Image();
-            img.src = dataURL;
-
-            // 이미지 로딩이 완료되면 캔버스에 그림
-            img.onload = function() {
-                context.drawImage(img, 0, 0);
-            };
+            for (let i = 0; i < data.image.length; i++) {
+                drawLine(data.image[i]);
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -218,6 +188,17 @@
         const picker = document.getElementById("color-picker") as HTMLInputElement;
         picker.click();
     };
+
+    const drawLine = (draw: Draw) => {
+        context.beginPath()
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        context.lineWidth = draw.width;
+        context.strokeStyle = draw.color;
+        context.moveTo(draw.from.x, draw.from.y);
+        context.lineTo(draw.to.x, draw.to.y);
+        context.stroke();
+    }
 </script>
 
 <svelte:head>
@@ -227,8 +208,8 @@
     <script src="https://unpkg.com/vanilla-picker@2.10.1"></script>
 </svelte:head>
 
-<canvas id="canvas-mouse" bind:this={canvasMouse} width="3000" height="3000"></canvas>
-<canvas id="canvas" bind:this={canvas} width="3000" height="3000"></canvas>
+<canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
+<canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
 <div id="palette">
     <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
     <input id="range" type="range" min=1 max=50 bind:value={myData.width} style="accent-color: {myData.color};">
