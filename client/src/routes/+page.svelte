@@ -230,9 +230,9 @@
 <canvas id="canvas-mouse" bind:this={canvasMouse} width="3000" height="3000"></canvas>
 <canvas id="canvas" bind:this={canvas} width="3000" height="3000"></canvas>
 <div id="palette">
-    <input id="color-picker" type="color" bind:value={myData.color} style="display: none;" />
     <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
     <input id="range" type="range" min=1 max=50 bind:value={myData.width} style="accent-color: {myData.color};">
+    <input id="color-picker" type="color" bind:value={myData.color} />
 </div>
 
 <style>
@@ -273,11 +273,16 @@
         padding: 1px;
         margin-right: 10px;
         border-radius: 20px;
+        z-index: 3;
     }
 
     #color-picker {
         position: fixed;
-        top: 50px;
+        top: 30px;
+        left: 30px;
+        width: 1px;
+        height: 1px;
+        z-index: 2;
     }
 
     #range {

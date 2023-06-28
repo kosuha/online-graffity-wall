@@ -178,6 +178,6 @@ package/
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-server/package-lock.json
-client/package-lock.json
-reload.sh
+./server/package-lock.json
+./client/package-lock.json
+./reload.sh
