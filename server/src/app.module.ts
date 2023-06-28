@@ -8,9 +8,11 @@ import { DrawRepository } from './draw.repository';
 import { UserRepository } from './user.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DrawData } from './drawdata.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '../client/build'),
     }),
