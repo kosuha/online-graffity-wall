@@ -36,7 +36,7 @@
         width: 1
     };
     let users: UserData[] = [];
-    let drawingOn: boolean = true;
+    let drawingOn: boolean = false;
 
     onMount(() => {
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -166,6 +166,7 @@
             for (let i = 0; i < data.image.length; i++) {
                 drawLine(data.image[i]);
             }
+            drawingOn = true;
         })
         .catch((error) => {
             console.error('Error:', error);
