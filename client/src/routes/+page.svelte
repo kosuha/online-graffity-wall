@@ -191,7 +191,7 @@
     };
 
     const drawLine = (draw: Draw) => {
-        if (draw.from.x === draw.from.y && draw.to.x === draw.to.y) {
+        if (draw.from.x === draw.to.x && draw.from.y === draw.to.y) {
             context.beginPath()
             context.arc(draw.from.x, draw.from.y, draw.width / 2, 0, Math.PI * 2);
             context.fillStyle = draw.color;
