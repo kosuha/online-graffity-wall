@@ -45,7 +45,7 @@
 
         getImage();
         getUsers();
-
+        
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
@@ -59,13 +59,14 @@
         })
 
         $socketStore.on("mousemove", (data: any) => {
+            
             if (data.draw !== undefined) {
                 if (data.draw.from.x === data.draw.to.x && data.draw.from.y === data.draw.to.y) {
-                    contextMouse.beginPath()
-                    contextMouse.arc(data.draw.from.x, data.draw.from.y, data.draw.width / 2, 0, Math.PI * 2);
-                    contextMouse.fillStyle = data.draw.color;
-                    contextMouse.fill();
-                    contextMouse.closePath();
+                    context.beginPath()
+                    context.arc(data.draw.from.x, data.draw.from.y, data.draw.width / 2, 0, Math.PI * 2);
+                    context.fillStyle = data.draw.color;
+                    context.fill();
+                    context.closePath();
                 } else {
                     drawLine(data.draw);
                 }
@@ -119,7 +120,12 @@
             to: { x: myData.pos.x, y: myData.pos.y }
         }
 
-        drawLine(draw);
+        context.beginPath()
+        context.arc(myData.pos.x, myData.pos.y, myData.width / 2, 0, Math.PI * 2);
+        context.fillStyle = myData.color;
+        context.fill();
+        context.closePath();
+        
         $socketStore.emit("mousemove", { user: data, draw: draw });
     }
 
