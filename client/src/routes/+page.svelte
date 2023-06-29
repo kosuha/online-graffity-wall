@@ -60,7 +60,7 @@
 
         $socketStore.on("mousemove", (data: any) => {
             if (data.draw !== undefined) {
-                if (data.draw.from.x === data.draw.from.x && data.draw.from.y === data.draw.from.y) {
+                if (data.draw.from.x === data.draw.to.x && data.draw.from.y === data.draw.to.y) {
                     contextMouse.beginPath()
                     contextMouse.arc(data.draw.from.x, data.draw.from.y, data.draw.width / 2, 0, Math.PI * 2);
                     contextMouse.fillStyle = data.draw.color;
