@@ -61,15 +61,7 @@
         $socketStore.on("mousemove", (data: any) => {
             
             if (data.draw !== undefined) {
-                if (data.draw.from.x === data.draw.to.x && data.draw.from.y === data.draw.to.y) {
-                    context.beginPath()
-                    context.arc(data.draw.from.x, data.draw.from.y, data.draw.width / 2, 0, Math.PI * 2);
-                    context.fillStyle = data.draw.color;
-                    context.fill();
-                    context.closePath();
-                } else {
-                    drawLine(data.draw);
-                }
+                drawLine(data.draw);
             }
             for (let i = 0; i < users.length; i++) {
                 if (users[i].id === data.user.id) {
@@ -120,12 +112,7 @@
             to: { x: myData.pos.x, y: myData.pos.y }
         }
 
-        context.beginPath()
-        context.arc(myData.pos.x, myData.pos.y, myData.width / 2, 0, Math.PI * 2);
-        context.fillStyle = myData.color;
-        context.fill();
-        context.closePath();
-        
+        drawLine(draw);
         $socketStore.emit("mousemove", { user: data, draw: draw });
     }
 
@@ -204,14 +191,22 @@
     };
 
     const drawLine = (draw: Draw) => {
-        context.beginPath()
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        context.lineWidth = draw.width;
-        context.strokeStyle = draw.color;
-        context.moveTo(draw.from.x, draw.from.y);
-        context.lineTo(draw.to.x, draw.to.y);
-        context.stroke();
+        if (draw.from.x === draw.from.y && draw.to.x === draw.to.y) {
+            context.beginPath()
+            context.arc(draw.from.x, draw.from.y, draw.width / 2, 0, Math.PI * 2);
+            context.fillStyle = draw.color;
+            context.fill();
+            context.closePath();
+        } else {
+            context.beginPath()
+            context.lineJoin = 'round';
+            context.lineCap = 'round';
+            context.lineWidth = draw.width;
+            context.strokeStyle = draw.color;
+            context.moveTo(draw.from.x, draw.from.y);
+            context.lineTo(draw.to.x, draw.to.y);
+            context.stroke();
+        }
     }
 </script>
 
