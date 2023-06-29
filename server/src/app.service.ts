@@ -4,16 +4,46 @@ import { UserData } from './dataTransferObjects/UserData.dto';
 import { UserRepository } from './user.repository';
 import { Position } from './dataTransferObjects/Position.dto';
 import { Draw } from './dataTransferObjects/Draw.dto';
+import { createCanvas } from 'canvas';
 
 @Injectable()
 export class AppService {
-    constructor (
-        private readonly drawRepository: DrawRepository,
-        private readonly userRepository: UserRepository,
-    ) {}
+  constructor (
+      private readonly drawRepository: DrawRepository,
+      private readonly userRepository: UserRepository,
+  ) {}
+  
+  canvas = createCanvas(2000, 2000);
+  context = this.canvas.getContext('2d');
+      
+  // async generateImage() {
+  //   const draws: Draw[] = await this.drawRepository.getAllDraw();
+  //   for (let i = 0; i < draws.length; i++) {
+  //     this.updateDraw(draws[i]);
+  //   }
+  // }
 
-  async getImage(): Promise<Draw[]> {
-    return await this.drawRepository.getAllDraw();
+  getImage(): string {
+    return this.canvas.toDataURL();
+  }
+
+  updateDraw(draw: Draw) {
+    if (draw.from.x === draw.to.x && draw.from.y === draw.to.y) {
+      this.context.beginPath()
+      this.context.arc(draw.from.x, draw.from.y, draw.width / 2, 0, Math.PI * 2);
+      this.context.fillStyle = draw.color;
+      this.context.fill();
+      this.context.closePath();
+    } else {
+      this.context.beginPath()
+      this.context.lineJoin = 'round';
+      this.context.lineCap = 'round';
+      this.context.lineWidth = draw.width;
+      this.context.strokeStyle = draw.color;
+      this.context.moveTo(draw.from.x, draw.from.y);
+      this.context.lineTo(draw.to.x, draw.to.y);
+      this.context.stroke();
+    }
   }
 
   getUsers(): UserData[] {

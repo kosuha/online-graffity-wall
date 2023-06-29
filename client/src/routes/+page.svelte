@@ -163,9 +163,11 @@
         })
         .then(response => response.json())
         .then((data) => {
-            for (let i = 0; i < data.image.length; i++) {
-                drawLine(data.image[i]);
-            }
+            let img = new Image();
+            img.onload = function() {
+                context.drawImage(img, 0, 0);
+            };
+            img.src = data.image;
             drawingOn = true;
         })
         .catch((error) => {

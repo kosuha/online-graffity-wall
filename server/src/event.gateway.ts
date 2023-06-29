@@ -47,10 +47,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     handleMouseMove(client: Socket, data: MouseMoveData) {
         if (!this.appService.isValidUser(data.user)) return;
         this.appService.updateUser(data.user);
-        if (!this.appService.isVaildDraw(data.user, data.draw)) return;
-        client.broadcast.emit('mousemove', data);
         if (data.draw !== undefined) {
-            this.drawRepository.insertData(data.draw);
+            if (!this.appService.isVaildDraw(data.user, data.draw)) return;
+            this.appService.updateDraw(data.draw);
+            // this.drawRepository.insertData(data.draw);
         }
+        client.broadcast.emit('mousemove', data);
     }
 }
