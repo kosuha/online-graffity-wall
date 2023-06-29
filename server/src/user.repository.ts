@@ -18,6 +18,15 @@ export class UserRepository {
         }
     }
 
+    isInUsers(data: UserData): boolean {
+        for (let i = 0; i < this.users.length; i++) {
+            if (data.id === this.users[i].id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     getUsers(): UserData[] {
         return this.users;
     }

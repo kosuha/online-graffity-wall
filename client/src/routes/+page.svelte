@@ -36,6 +36,7 @@
         width: 1
     };
     let users: UserData[] = [];
+    let drawingOn: boolean = false;
 
     onMount(() => {
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -104,16 +105,18 @@
             width: myData.width
         }
 
-        const draw: Draw = {
-            id: myData.id,
-            width: myData.width,
-            color: myData.color,
-            from: { x: myData.pos.x, y: myData.pos.y },
-            to: { x: myData.pos.x, y: myData.pos.y }
+        if (drawingOn) {
+            const draw: Draw = {
+                id: myData.id,
+                width: myData.width,
+                color: myData.color,
+                from: { x: myData.pos.x, y: myData.pos.y },
+                to: { x: myData.pos.x, y: myData.pos.y }
+            }
+    
+            drawLine(draw);
+            $socketStore.emit("mousemove", { user: data, draw: draw });
         }
-
-        drawLine(draw);
-        $socketStore.emit("mousemove", { user: data, draw: draw });
     }
 
     const mouseUpEvent = (e: MouseEvent) => {
@@ -132,7 +135,7 @@
             width: myData.width
         }
 
-        if (myData.isDrawing) {
+        if (myData.isDrawing && drawingOn) {
             const draw: Draw = {
                 id: myData.id,
                 width: myData.width,
@@ -223,6 +226,12 @@
     <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
     <input id="range" type="range" min=1 max=50 bind:value={myData.width} style="accent-color: {myData.color};">
     <input id="color-picker" type="color" bind:value={myData.color} />
+    <div id="brush-box">
+        <h1>
+            Brush On:
+        </h1>
+        <input id="drawing-on" type="checkbox" bind:checked={drawingOn} />
+    </div>
 </div>
 
 <style>
@@ -282,6 +291,23 @@
         outline: none;
         -webkit-appearance: none;
         accent-color: #000000;
+    }
+
+    #brush-box {
+        display: flex;
+        flex-direction: row;
+    }
+
+    #brush-box > h1 {
+        margin: 0;
+        padding: 0;
+        font-size: 25px;
+    }
+
+    #drawing-on {
+        margin: 10px;
+        width: 25px;
+        height: 25px;
     }
 
 </style>

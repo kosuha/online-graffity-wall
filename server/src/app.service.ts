@@ -39,4 +39,20 @@ export class AppService {
     if (0 <= width && width <= 50) return true;
     return false;
   }
+
+  isValidUser(user: UserData): boolean {
+    if (!this.userRepository.isInUsers(user)) return false;
+    if (!this.isValidColor(user.color)) return false;
+    if (!this.isValidPosition(user.pos)) return false;
+    if (!this.isValidWidth(user.width)) return false;
+    return true;
+  }
+
+  isVaildDraw(user: UserData, draw: Draw): boolean {
+    if (user.id !== draw.id) return false;
+    if (!user.isDrawing) return false;
+    if (user.width !== draw.width) return false;
+    if (user.pos.x !== draw.to.x || user.pos.y !== draw.to.y) return false;
+    return true;
+  }
 }
