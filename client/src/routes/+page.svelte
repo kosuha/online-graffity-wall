@@ -60,7 +60,15 @@
 
         $socketStore.on("mousemove", (data: any) => {
             if (data.draw !== undefined) {
-                drawLine(data.draw);
+                if (data.draw.from.x === data.draw.from.x && data.draw.from.y === data.draw.from.y) {
+                    contextMouse.beginPath()
+                    contextMouse.arc(data.draw.from.x, data.draw.from.y, data.draw.width / 2, 0, Math.PI * 2);
+                    contextMouse.fillStyle = data.draw.color;
+                    contextMouse.fill();
+                    contextMouse.closePath();
+                } else {
+                    drawLine(data.draw);
+                }
             }
             for (let i = 0; i < users.length; i++) {
                 if (users[i].id === data.user.id) {
