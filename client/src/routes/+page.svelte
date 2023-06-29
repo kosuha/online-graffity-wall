@@ -36,7 +36,7 @@
         width: 1
     };
     let users: UserData[] = [];
-    let drawingOn: boolean = false;
+    let drawingOn: boolean = true;
 
     onMount(() => {
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -226,12 +226,12 @@
     <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
     <input id="range" type="range" min=1 max=50 bind:value={myData.width} style="accent-color: {myData.color};">
     <input id="color-picker" type="color" bind:value={myData.color} />
-    <div id="brush-box">
+    <!-- <div id="brush-box">
         <h1>
             Brush On:
         </h1>
         <input id="drawing-on" type="checkbox" bind:checked={drawingOn} />
-    </div>
+    </div> -->
 </div>
 
 <style>
