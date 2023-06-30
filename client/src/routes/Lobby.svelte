@@ -254,17 +254,6 @@
 
 <canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
 <canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
-<div id="menu">
-    <div>
-        <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
-        <input id="range" type="range" min=1 max=200 bind:value={myData.width} style="accent-color: {myData.color};">
-        <input id="color-picker" type="color" bind:value={myData.color} />
-    </div>
-    <div>
-        <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
-        <button id="save" on:click={saveEvent}>Save</button>
-    </div>
-</div>
 
 <style>
     #canvas, #canvas-mouse {
@@ -276,25 +265,35 @@
     }
 
     #canvas {
-        z-index: 1;
         border: 1px solid rgba(0, 0, 0, 0.5);
+        z-index: 0;
     }
 
     #canvas-mouse {
         background-color: rgba(255, 255, 255, 0);
-        z-index: 2;
+        z-index: 99999999;
+    }
+
+    #menu, #tools {
+        margin: 5px;
     }
 
     #menu {
         position: fixed;
-        width: 100%;
-        z-index: 3;
+        top: 0px;
+        right: 0px;
+        z-index: 100000000;
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
+        padding-right: 10px;
     }
 
-    #menu > div:first-child {
+    #tools {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 100000000;
+
         background-color: rgba(47, 47, 47, 0.5);
         border: 1px solid black;
         padding: 10px;
@@ -307,11 +306,7 @@
         height: 40px;
     }
 
-    #menu > div:nth-child(2) {
-        padding-right: 10px;
-    }
-
-    #menu > div:nth-child(2) > button {
+    #menu > button {
         margin-right: 5px;
         border-radius: 500px;
         padding-left: 10px;
@@ -319,7 +314,7 @@
         border: 1px solid black;
     }
 
-    #menu > div:nth-child(2) > button:hover {
+    #menu > button:hover {
         margin-right: 5px;
         border-radius: 500px;
         padding-left: 10px;
@@ -356,4 +351,5 @@
         accent-color: #000000;
         margin: 10px;
     }
+
 </style>

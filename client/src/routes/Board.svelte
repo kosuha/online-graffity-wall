@@ -41,6 +41,7 @@
     let drawingOn: boolean = false;
     let roomId: string = new URLSearchParams($querystring).get("id");
     let intervalId;
+    let zIndex = 1;
 
     $: {
         let searchParams = new URLSearchParams($querystring);
@@ -272,42 +273,60 @@
         a.remove();
     }
 
-    const loadEvent = (e) => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const hRatio = canvas.width  / img.width;
-                const vRatio = canvas.height / img.height;
-                const ratio  = Math.min(hRatio, vRatio);
-                
-                const centerShift_x = (canvas.width - img.width*ratio) / 2;
-                const centerShift_y = (canvas.height - img.height*ratio) / 2;  
+    // const loadEvent = (e) => {
+    //     const reader = new FileReader();
+    //     reader.onload = function(event) {
+    //         const img = new Image();
+    //         img.onload = function() {
+    //             const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    //             const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
 
-                context.drawImage(img, 0, 0, img.width, img.height,
-                                  centerShift_x, centerShift_y, img.width*ratio, img.height*ratio);
-            }
-            img.src = event.target.result as string;
-        }
-        reader.readAsDataURL(e.target.files[0]);
-    }
+    //             let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
+    //             tempCanvas.width = img.width * scale;
+    //             tempCanvas.height = img.height * scale;
+    //             tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
+    //             document.body.insertBefore(tempCanvas, document.body.children[1]);
+    //             tempCanvas.style.position = "absolute";
+    //             tempCanvas.style.zIndex = `${zIndex}`;
+    //             zIndex++;
+    //             tempCanvas.style.top = `${canvas.height / 2 - tempCanvas.height / 2}`;
+    //             tempCanvas.style.left = `${canvas.width / 2 - tempCanvas.width / 2}`;
+    //             tempCanvas.style.margin = "0";
+    //             tempCanvas.style.padding = "0";
+
+    //             const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    //             const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
+    //             drawCanvas.width = 2000;
+    //             drawCanvas.height = 2000;
+    //             drawCanvas.style.position = "absolute";
+    //             drawCanvas.style.zIndex = `${zIndex}`;
+    //             zIndex++;
+    //             drawCanvas.style.margin = "0";
+    //             drawCanvas.style.padding = "0";
+    //             document.body.insertBefore(drawCanvas, document.body.children[1]);
+                
+    //             canvas = drawCanvas;
+    //             context = drawCtx;
+    //         }
+    //         img.src = event.target.result as string;
+    //     }
+    //     reader.readAsDataURL(e.target.files[0]);
+    // }
 </script>
 
 <canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
 <canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
+<div id="tools">
+    <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
+    <input id="range" type="range" min=1 max=200 bind:value={myData.width} style="accent-color: {myData.color};">
+    <input id="color-picker" type="color" bind:value={myData.color} />
+</div>
 <div id="menu">
-    <div>
-        <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
-        <input id="range" type="range" min=1 max=200 bind:value={myData.width} style="accent-color: {myData.color};">
-        <input id="color-picker" type="color" bind:value={myData.color} />
-    </div>
-    <div>
-        <button id="clear" on:click={clearButtonEvent}>Clear</button>
-        <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
-        <button id="save" on:click={saveEvent}>Save</button>
-        <button id="load" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
-        <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/>
-    </div>
+    <button id="clear" on:click={clearButtonEvent}>Clear</button>
+    <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
+    <button id="save" on:click={saveEvent}>Save</button>
+    <!-- <button id="load" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
+    <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/> -->
 </div>
 
 <style>
@@ -320,25 +339,35 @@
     }
 
     #canvas {
-        z-index: 1;
         border: 1px solid rgba(0, 0, 0, 0.5);
+        z-index: 0;
     }
 
     #canvas-mouse {
         background-color: rgba(255, 255, 255, 0);
-        z-index: 2;
+        z-index: 99999999;
+    }
+
+    #menu, #tools {
+        margin: 5px;
     }
 
     #menu {
         position: fixed;
-        width: 100%;
-        z-index: 3;
+        top: 0px;
+        right: 0px;
+        z-index: 100000000;
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
+        padding-right: 10px;
     }
 
-    #menu > div:first-child {
+    #tools {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 100000000;
+
         background-color: rgba(47, 47, 47, 0.5);
         border: 1px solid black;
         padding: 10px;
@@ -351,11 +380,7 @@
         height: 40px;
     }
 
-    #menu > div:nth-child(2) {
-        padding-right: 10px;
-    }
-
-    #menu > div:nth-child(2) > button {
+    #menu > button {
         margin-right: 5px;
         border-radius: 500px;
         padding-left: 10px;
@@ -363,7 +388,7 @@
         border: 1px solid black;
     }
 
-    #menu > div:nth-child(2) > button:hover {
+    #menu > button:hover {
         margin-right: 5px;
         border-radius: 500px;
         padding-left: 10px;
