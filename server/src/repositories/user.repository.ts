@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserData } from './dataTransferObjects/UserData.dto';
+import { UserData } from '../dataTransferObjects/UserData.dto';
 
 @Injectable()
 export class UserRepository {
@@ -9,9 +9,9 @@ export class UserRepository {
         this.users.push(data);
     }
 
-    popUser(data: UserData): void {
+    popUser(id: string): void {
         for (let i = 0; i < this.users.length; i++) {
-            if (data.id === this.users[i].id) {
+            if (id === this.users[i].id) {
                 this.users.splice(i, 1);
                 return ;
             }

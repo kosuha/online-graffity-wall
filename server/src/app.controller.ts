@@ -7,13 +7,13 @@ export class AppController {
     private readonly appService: AppService,
     ) {}
 
-  @Get('/image')
-  async getImage(): Promise<Object> {
-    return { image: await this.appService.getImage() };
+  @Post('/image')
+  getImage(@Req() req: Request): Object {
+    return { image: this.appService.getImage((req as any).body.id) };
   }
 
-  @Get('/users')
-  getUsers(): Object {
-    return { users: this.appService.getUsers() };
+  @Post('/users')
+  getUsers(@Req() req: Request): Object {
+    return { users: this.appService.getUsers((req as any).body.id) };
   }
 }

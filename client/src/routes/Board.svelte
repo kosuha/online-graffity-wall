@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
+    import { querystring, push, location } from 'svelte-spa-router';
     import { socketStore } from "../store";
+    import { nanoid } from 'nanoid';
 
     interface UserData {
         id: string;
@@ -37,30 +39,46 @@
     };
     let users: UserData[] = [];
     let drawingOn: boolean = false;
+    let roomId: string = new URLSearchParams($querystring).get("id");
+    let intervalId;
 
+    $: {
+        let searchParams = new URLSearchParams($querystring);
+        const newParam: string = searchParams.get("id");
+        if (newParam === "lobby") {
+            push('/');
+        }
+        if (roomId !== newParam) {
+            window.location.reload();
+        }
+    }
+    
     onMount(() => {
+        getImage();
+        getUsers();
+        
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
         canvasMouse = document.getElementById("canvas-mouse") as HTMLCanvasElement;
         context = canvas.getContext("2d") as CanvasRenderingContext2D;
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
-
-        getImage();
-        getUsers();
         
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
 
-        $socketStore.on("connected", (data: UserData) => {
+        $socketStore.on("join", (data: UserData) => {
             users.push(data);
         })
 
-        $socketStore.on("disconnected", (data: UserData) => {
-            users = users.filter(user => user.id !== data.id);
+        $socketStore.on("disconnected", (id: string) => {
+            users = users.filter(user => user.id !== id);
+        })
+
+        $socketStore.on("leave", (id: string) => {
+            users = users.filter(user => user.id !== id);
         })
 
         $socketStore.on("mousemove", (data: any) => {
-            
             if (data.draw !== undefined) {
                 drawLine(data.draw);
             }
@@ -72,7 +90,16 @@
             }
         })
 
-        setInterval(drawMouse, 0.1);
+        $socketStore.on("clear", () => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        })
+
+        intervalId = setInterval(drawMouse, 0.1);
+    });
+
+    onDestroy(() => {
+        clearInterval(intervalId);
+        $socketStore.emit("leave", { roomId, user: myData });
     });
 
     // 마우스 그리기
@@ -115,7 +142,7 @@
             }
     
             drawLine(draw);
-            $socketStore.emit("mousemove", { user: data, draw: draw });
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
         }
     }
 
@@ -147,27 +174,32 @@
                 }
             }
             drawLine(draw);
-            $socketStore.emit("mousemove", { user: data, draw: draw });
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
         } else {
-            $socketStore.emit("mousemove", { user: data, draw: undefined });
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: undefined });
         }
         myData = data;
     }
 
     const getImage = () => {
         fetch('/image', {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                id: roomId,
+            })
         })
         .then(response => response.json())
         .then((data) => {
-            let img = new Image();
-            img.onload = function() {
-                context.drawImage(img, 0, 0);
-            };
-            img.src = data.image;
+            if (data.image !== undefined) {
+                let img = new Image();
+                img.onload = function() {
+                    context.drawImage(img, 0, 0);
+                };
+                img.src = data.image;
+            }
             drawingOn = true;
         })
         .catch((error) => {
@@ -177,14 +209,22 @@
 
     const getUsers = () => {
         fetch('/users', {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                id: roomId,
+            })
         })
         .then(response => response.json())
         .then((data) => {
             users = data.users as UserData[];
+            
+            if (users === undefined) {
+                users = [];
+            }
+            $socketStore.emit("join", {roomId, user: myData});
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -214,27 +254,60 @@
             context.stroke();
         }
     }
-</script>
 
-<svelte:head>
-    <title>
-        Online Graffity Wall
-    </title>
-    <script src="https://unpkg.com/vanilla-picker@2.10.1"></script>
-</svelte:head>
+    const clearButtonEvent = () => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        $socketStore.emit("clear", { roomId: roomId, user: myData });
+    }
+
+    const newBoardButtonEvent = () => {
+        window.open(`/#/board?id=${nanoid()}`);
+    };
+
+    const saveEvent = () => {
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = canvas.toDataURL();
+        a.download = "doodle.png";
+        a.click();
+        a.remove();
+    }
+
+    const loadEvent = (e) => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const hRatio = canvas.width  / img.width;
+                const vRatio = canvas.height / img.height;
+                const ratio  = Math.min(hRatio, vRatio);
+                
+                const centerShift_x = (canvas.width - img.width*ratio) / 2;
+                const centerShift_y = (canvas.height - img.height*ratio) / 2;  
+
+                context.drawImage(img, 0, 0, img.width, img.height,
+                                  centerShift_x, centerShift_y, img.width*ratio, img.height*ratio);
+            }
+            img.src = event.target.result as string;
+        }
+        reader.readAsDataURL(e.target.files[0]);
+    }
+</script>
 
 <canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
 <canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
-<div id="palette">
-    <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
-    <input id="range" type="range" min=1 max=50 bind:value={myData.width} style="accent-color: {myData.color};">
-    <input id="color-picker" type="color" bind:value={myData.color} />
-    <!-- <div id="brush-box">
-        <h1>
-            Brush On:
-        </h1>
-        <input id="drawing-on" type="checkbox" bind:checked={drawingOn} />
-    </div> -->
+<div id="menu">
+    <div>
+        <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
+        <input id="range" type="range" min=1 max=200 bind:value={myData.width} style="accent-color: {myData.color};">
+        <input id="color-picker" type="color" bind:value={myData.color} />
+    </div>
+    <div>
+        <button id="clear" on:click={clearButtonEvent}>Clear</button>
+        <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
+        <button id="save" on:click={saveEvent}>Save</button>
+        <button id="load" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
+        <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/>
+    </div>
 </div>
 
 <style>
@@ -256,24 +329,56 @@
         z-index: 2;
     }
 
-    #palette {
+    #menu {
         position: fixed;
+        width: 100%;
         z-index: 3;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #menu > div:first-child {
         background-color: rgba(47, 47, 47, 0.5);
         border: 1px solid black;
         padding: 10px;
+        margin-right: 10px;
         border-radius: 10px;
         display: flex;
         flex-direction: row;
+        align-content: center;
         align-items: center;
+        height: 40px;
+    }
+
+    #menu > div:nth-child(2) {
+        padding-right: 10px;
+    }
+
+    #menu > div:nth-child(2) > button {
+        margin-right: 5px;
+        border-radius: 500px;
+        padding-left: 10px;
+        padding-right: 10px;
+        border: 1px solid black;
+    }
+
+    #menu > div:nth-child(2) > button:hover {
+        margin-right: 5px;
+        border-radius: 500px;
+        padding-left: 10px;
+        padding-right: 10px;
+        border: 1px solid blue;
+        color: blue;
     }
 
     #color-picker-button {
         width: 30px;
         height: 30px;
+        border-radius: 500px;
         border: none;
         padding: 1px;
-        margin-right: 10px;
+        margin: 5px;
         border-radius: 20px;
         z-index: 3;
     }
@@ -292,25 +397,8 @@
         background: white;
         border-radius: 10px;
         outline: none;
-        -webkit-appearance: none;
         accent-color: #000000;
-    }
-
-    #brush-box {
-        display: flex;
-        flex-direction: row;
-    }
-
-    #brush-box > h1 {
-        margin: 0;
-        padding: 0;
-        font-size: 25px;
-    }
-
-    #drawing-on {
         margin: 10px;
-        width: 25px;
-        height: 25px;
     }
 
 </style>

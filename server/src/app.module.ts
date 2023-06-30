@@ -4,36 +4,34 @@ import { AppService } from './app.service';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { EventsGateway } from './event.gateway';
-import { DrawRepository } from './draw.repository';
-import { UserRepository } from './user.repository';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { DrawData } from './drawdata.entity';
+import { UserRepository } from './repositories/user.repository';
 import { ConfigModule } from '@nestjs/config';
+import { RoomRepository } from './repositories/room.repository';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '../client/build'),
+      rootPath: join(__dirname, '..', '../client/public'),
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: process.env.POSTGRE_USER,
-      password: process.env.POSTGRE_PASSWORD,
-      database: process.env.POSTGRE_OGW,
-      entities: [DrawData],
-      synchronize: true,
-    }),
-    TypeOrmModule.forFeature([DrawData]),
+    // TypeOrmModule.forRoot({
+    //   type: 'postgres',
+    //   host: 'localhost',
+    //   port: 5432,
+    //   username: process.env.POSTGRE_USER,
+    //   password: process.env.POSTGRE_PASSWORD,
+    //   database: process.env.POSTGRE_OGW,
+    //   entities: [DrawData],
+    //   synchronize: true,
+    // }),
+    // TypeOrmModule.forFeature([DrawData]),
   ],
   controllers: [AppController],
   providers: [
     AppService,
     EventsGateway,
-    DrawRepository,
-    UserRepository
+    UserRepository,
+    RoomRepository
   ],
 })
 export class AppModule {}
