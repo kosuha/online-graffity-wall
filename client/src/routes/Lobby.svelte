@@ -255,6 +255,17 @@
 <canvas id="canvas-mouse" bind:this={canvasMouse} width="2000" height="2000"></canvas>
 <canvas id="canvas" bind:this={canvas} width="2000" height="2000"></canvas>
 
+<div id="tools">
+    <button id="color-picker-button" on:click={colorButtonEvent} style="background-color: {myData.color};"></button>
+    <input id="range" type="range" min=1 max=200 bind:value={myData.width} style="accent-color: {myData.color};">
+    <input id="color-picker" type="color" bind:value={myData.color} />
+</div>
+<div id="menu">
+    <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
+    <button id="save" on:click={saveEvent}>Save</button>
+</div>
+
+
 <style>
     #canvas, #canvas-mouse {
         position: absolute;
