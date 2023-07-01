@@ -24,12 +24,23 @@
         from: Position;
         to: Position;
     }
+
+    interface CanvasData {
+        pos: Position;
+        width: number;
+        height: number;
+        canvas: HTMLCanvasElement;
+        ctx: CanvasRenderingContext2D;
+    }
     
     let canvasBox: HTMLDivElement;
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D;
     let canvasMouse: HTMLCanvasElement;
     let contextMouse: CanvasRenderingContext2D;
+
+    let canvasList: CanvasData[] = [];
+    // 캔버스 리스트로 전환하기...
 
     let myData: UserData = {
         id: $socketStore.id,
@@ -60,14 +71,18 @@
     }
     
     onMount(() => {
-        getImage();
         getUsers();
+        getCanvas();
         
         canvasBox = document.getElementById("canvas-box") as HTMLDivElement;
-        console.log(canvasBox.offsetLeft, canvasBox.offsetTop);
+
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
-        canvasMouse = document.getElementById("canvas-mouse") as HTMLCanvasElement;
         context = canvas.getContext("2d") as CanvasRenderingContext2D;
+
+        context.fillStyle = "rgb(255, 255, 255)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        canvasMouse = document.getElementById("canvas-mouse") as HTMLCanvasElement;
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
         
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
@@ -108,10 +123,14 @@
             }
         });
 
+        $socketStore.on("loadImage", (image: string) => {
+            loadImage(image);
+        });
+
         selectedToolButtonDesign();
 
         $socketStore.on("clear", () => {
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            clear();
         })
 
         intervalId = setInterval(drawMouse, 0.1);
@@ -260,15 +279,12 @@
             $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
         }
         myData = data;
-        console.log(myData.isDrawing);
     }
 
     const touchEndEvent = (e: TouchEvent) => {
         e.preventDefault();
         isDown = false;
         myData.isDrawing = false;
-        console.log("end");
-        
     }
 
     const touchMoveEvent = (e: TouchEvent) => {
@@ -310,8 +326,8 @@
         myData = data;
     }
 
-    const getImage = () => {
-        fetch('/image', {
+    const getCanvas = () => {
+        fetch('/canvas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -322,12 +338,39 @@
         })
         .then(response => response.json())
         .then((data) => {
-            if (data.image !== undefined) {
-                let img = new Image();
-                img.onload = function() {
-                    context.drawImage(img, 0, 0);
-                };
-                img.src = data.image;
+            if (data.canvas !== undefined) {
+                canvasList = [];
+                data.canvas.forEach(c => {
+                    let img = new Image();
+                    img.onload = function() {
+                        const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+                        const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
+
+                        let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
+                        tempCanvas.width = img.width * scale;
+                        tempCanvas.height = img.height * scale;
+                        tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
+                        tempCanvas.style.position = "absolute";
+                        tempCanvas.style.top = c.pos.y;
+                        tempCanvas.style.left = c.pos.x;
+                        tempCanvas.style.zIndex = `${zIndex}`;
+                        zIndex++;
+                        tempCanvas.style.margin = "0";
+                        tempCanvas.style.padding = "0";
+                        canvasBox.appendChild(tempCanvas);
+                        
+                        canvasList.push({
+                            pos: c.pos,
+                            width: tempCanvas.width,
+                            height: tempCanvas.height,
+                            canvas: tempCanvas,
+                            ctx: tempCtx
+                        });
+                        canvas = tempCanvas;
+                        context = tempCtx;
+                    };
+                    img.src = c.src;
+                });
             }
             drawingOn = true;
         })
@@ -385,8 +428,41 @@
     }
 
     const clearButtonEvent = () => {
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        clear();
         $socketStore.emit("clear", { roomId: roomId, user: myData });
+    }
+
+    const clear = () => {
+        const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
+        drawCanvas.width = 2000;
+        drawCanvas.height = 2000;
+        drawCanvas.style.position = "absolute";
+        drawCanvas.style.top = "0";
+        drawCanvas.style.left = "0";
+        zIndex = 1;
+        drawCanvas.style.zIndex = `${zIndex}`;
+        zIndex++;
+        drawCanvas.style.margin = "0";
+        drawCanvas.style.padding = "0";
+        drawCtx.fillStyle = "rgb(255, 255, 255)";
+        drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+        
+        canvasList.forEach(c => {
+            c.canvas.remove();
+        });
+
+        canvasList = [{
+            pos: {x: 0, y: 0},
+            width: drawCanvas.width,
+            height:drawCanvas.height,
+            canvas: drawCanvas,
+            ctx: drawCtx
+        }];
+        canvasBox.appendChild(drawCanvas);
+        
+        canvas = drawCanvas;
+        context = drawCtx;
     }
 
     const newBoardButtonEvent = () => {
@@ -401,44 +477,66 @@
         a.remove();
     }
 
+    const loadImage = (imageSrc: string) => {
+        const img = new Image();
+        img.onload = function() {
+            const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+            const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
+
+            let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
+            tempCanvas.width = img.width * scale;
+            tempCanvas.height = img.height * scale;
+            tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
+            canvasBox.insertBefore(tempCanvas, canvasBox.children[1]);
+            tempCanvas.style.position = "absolute";
+            tempCanvas.style.zIndex = `${zIndex}`;
+            zIndex++;
+            tempCanvas.style.top = "0";
+            tempCanvas.style.left = "0";
+            tempCanvas.style.margin = "0";
+            tempCanvas.style.padding = "0";
+
+            canvasList.push({
+                pos: {x: 0, y: 0},
+                width: tempCanvas.width,
+                height: tempCanvas.height,
+                canvas: tempCanvas,
+                ctx: tempCtx
+            })
+
+            const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
+            const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
+            drawCanvas.width = 2000;
+            drawCanvas.height = 2000;
+            drawCanvas.style.position = "absolute";
+            drawCanvas.style.top = "0";
+            drawCanvas.style.left = "0";
+            drawCanvas.style.zIndex = `${zIndex}`;
+            zIndex++;
+            drawCanvas.style.margin = "0";
+            drawCanvas.style.padding = "0";
+            canvasBox.insertBefore(drawCanvas, canvasBox.children[1]);
+
+            canvasList.push({
+                pos: {x: 0, y: 0},
+                width: drawCanvas.width,
+                height: drawCanvas.height,
+                canvas: drawCanvas,
+                ctx: drawCtx
+            })
+            
+            canvas = drawCanvas;
+            context = drawCtx;
+        }
+        img.src = imageSrc;
+    }
+
     const loadEvent = (e) => {
         const reader = new FileReader();
         reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
-                const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
-
-                let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
-                tempCanvas.width = img.width * scale;
-                tempCanvas.height = img.height * scale;
-                tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
-                document.body.insertBefore(tempCanvas, canvasBox.children[1]);
-                tempCanvas.style.position = "absolute";
-                tempCanvas.style.zIndex = `${zIndex}`;
-                zIndex++;
-                tempCanvas.style.top = `${canvas.height / 2 - tempCanvas.height / 2}`;
-                tempCanvas.style.left = `${canvas.width / 2 - tempCanvas.width / 2}`;
-                tempCanvas.style.margin = "0";
-                tempCanvas.style.padding = "0";
-
-                const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
-                const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
-                drawCanvas.width = 2000;
-                drawCanvas.height = 2000;
-                drawCanvas.style.position = "absolute";
-                drawCanvas.style.top = "0";
-                drawCanvas.style.left = "0";
-                drawCanvas.style.zIndex = `${zIndex}`;
-                zIndex++;
-                drawCanvas.style.margin = "0";
-                drawCanvas.style.padding = "0";
-                canvasBox.insertBefore(drawCanvas, document.body.children[1]);
-                
-                canvas = drawCanvas;
-                context = drawCtx;
-            }
-            img.src = event.target.result as string;
+            const src = event.target.result as string;
+            loadImage(src);
+            $socketStore.emit("loadImage", { roomId: roomId, user: myData, image: src });
         }
         reader.readAsDataURL(e.target.files[0]);
     }
@@ -547,17 +645,12 @@
         margin: 0px;
     }
 
-    #canvas, #canvas-mouse {
+    #canvas-mouse {
         position: absolute;
         top: 0;
         left: 0;
         margin: 0px;
         box-sizing: border-box;
-    }
-
-    #canvas {
-        border: 1px solid rgba(0, 0, 0, 0.5);
-        z-index: 0;
     }
 
     #canvas-mouse {

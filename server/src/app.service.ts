@@ -16,22 +16,19 @@ export class AppService {
     return this.roomRepository.rooms.get(roomId).users.getUsers();
   }
 
-  getImage(roomId: string): string {
-    
+  getCanvas(roomId: string): Object[] {
     if (!this.roomRepository.rooms.has(roomId)) return undefined;
-    return this.roomRepository.rooms.get(roomId).getImage();
+    return this.roomRepository.rooms.get(roomId).getCanvas();
   }
 
   clearCanvas(roomId: string) {
     if (!this.roomRepository.rooms.has(roomId)) return ;
-
     this.roomRepository.rooms.get(roomId).clear();
   }
 
   updateDraw(roomId: string, draw: Draw) {
     if (!this.roomRepository.rooms.has(roomId)) return ;
-    
-    this.roomRepository.rooms.get(roomId).updateDraw(draw);
+    this.roomRepository.rooms.get(roomId).updataDraw(draw);
   }
 
   updateUser(roomId: string, userData: UserData): void {
@@ -70,5 +67,9 @@ export class AppService {
     if (user.width !== draw.width) return false;
     if (user.pos.x !== draw.to.x || user.pos.y !== draw.to.y) return false;
     return true;
+  }
+
+  loadImage(roomId: string, image: string) {
+    this.roomRepository.rooms.get(roomId).loadImage(image);
   }
 }

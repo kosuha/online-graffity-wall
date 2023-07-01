@@ -47,12 +47,12 @@
 
     onMount(() => {
         getUsers();
-        getImage();
+        getCanvas();
         
         canvasBox = document.getElementById("canvas-box") as HTMLDivElement;
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
-        canvasMouse = document.getElementById("canvas-mouse") as HTMLCanvasElement;
         context = canvas.getContext("2d") as CanvasRenderingContext2D;
+        canvasMouse = document.getElementById("canvas-mouse") as HTMLCanvasElement;
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
         
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
@@ -300,8 +300,8 @@
         myData = data;
     }
 
-    const getImage = () => {
-        fetch('/image', {
+    const getCanvas = () => {
+        fetch('/canvas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

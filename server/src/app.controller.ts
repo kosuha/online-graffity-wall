@@ -7,13 +7,18 @@ export class AppController {
     private readonly appService: AppService,
     ) {}
 
-  @Post('/image')
-  getImage(@Req() req: Request): Object {
-    return { image: this.appService.getImage((req as any).body.id) };
+  @Post('/canvas')
+  getCanvas(@Req() req: Request): Object {
+    return { canvas: this.appService.getCanvas((req as any).body.id) };
   }
 
   @Post('/users')
   getUsers(@Req() req: Request): Object {
     return { users: this.appService.getUsers((req as any).body.id) };
+  }
+
+  @Post('/image')
+  loadImage(@Req() req: Request): void {
+    console.log(req.body);
   }
 }

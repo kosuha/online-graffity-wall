@@ -39,10 +39,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     handleDisconnect(client: Socket) {
-        // let user: UserData = this.userRepository.getUserById(client.id);
-        // this.userRepository.popUser(user);
-        
-        
         for (let id of this.roomRepository.rooms.keys()) {
             for (let i = 0; i < this.roomRepository.rooms.get(id).users.users.length; i++) {
                 if (this.roomRepository.rooms.get(id).users.users[i].id === client.id) {
@@ -92,5 +88,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         this.appService.clearCanvas(data.roomId);
         client.broadcast.to(data.roomId).emit('clear');
+    }
+
+    @SubscribeMessage('loadImage')
+    handleLoadImage(client: Socket, data: any) {
+        if (data.roomId === "lobby") return ;
+        if (!this.appService.isValidUser(data.roomId, data.user)) return;
+        client.broadcast.to(data.roomId).emit('loadImage', data.image);
     }
 }
