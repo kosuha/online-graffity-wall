@@ -56,8 +56,11 @@
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
         
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
+        canvasMouse.addEventListener("touchstart", mouseDownEvent);
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
+        canvasMouse.addEventListener("touchmove", mouseMoveEvent);
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
+        canvasMouse.addEventListener("touchend", mouseUpEvent);
         canvasMouse.addEventListener("mouseleave", mouseLeaveEvent);
         canvasMouse.addEventListener("mouseout", mouseOutEvent);
         document.body.addEventListener('keydown', keydownEvent);

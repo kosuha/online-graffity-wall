@@ -140,6 +140,8 @@
     }
 
     const mouseDownEvent = (e: MouseEvent) => {
+        e.preventDefault();
+
         if (seletedTool === "move-tool") {
             isDown = true;
         }
@@ -169,21 +171,26 @@
     }
 
     const mouseUpEvent = (e: MouseEvent) => {
+        e.preventDefault();
         isDown = false;
         myData.isDrawing = false;
     }
 
     const mouseLeaveEvent = (e: MouseEvent) => {
+        e.preventDefault();
         isDown = false;
         myData.isDrawing = false;
     }
 
     const mouseOutEvent = (e: MouseEvent) => {
+        e.preventDefault();
         isDown = false;
         myData.isDrawing = false;
     }
 
     const mouseMoveEvent = (e: MouseEvent) => {
+        e.preventDefault();
+        
         if (seletedTool === "move-tool" && isDown) {
             canvasBox.style.left = `${canvasBox.offsetLeft + (e.clientX - canvasBox.offsetLeft) - myData.pos.x}px`;
             canvasBox.style.top = `${canvasBox.offsetTop + (e.clientY - canvasBox.offsetTop) - myData.pos.y}px`;
