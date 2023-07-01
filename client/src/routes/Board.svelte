@@ -71,13 +71,17 @@
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
         
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
-        canvasMouse.addEventListener("touchstart", mouseDownEvent);
+        canvasMouse.addEventListener("touchstart", touchStartEvent);
+        
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
-        canvasMouse.addEventListener("touchmove", mouseMoveEvent);
+        canvasMouse.addEventListener("touchmove", touchMoveEvent);
+
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
         canvasMouse.addEventListener("touchend", mouseUpEvent);
-        canvasMouse.addEventListener("mouseleave", mouseLeaveEvent);
-        canvasMouse.addEventListener("mouseout", mouseOutEvent);
+        canvasMouse.addEventListener("mouseleave", mouseUpEvent);
+        canvasMouse.addEventListener("mouseout", mouseUpEvent);
+        canvasMouse.addEventListener("touchcancle", mouseUpEvent);
+
         document.body.addEventListener('keydown', keydownEvent);
         document.body.addEventListener('keyup', keyupEvent);
 
@@ -170,19 +174,40 @@
         }
     }
 
+    const touchStartEvent = (e: TouchEvent) => {
+        e.preventDefault();
+
+        if (seletedTool === "move-tool") {
+            isDown = true;
+        }
+
+        if (drawingOn && seletedTool === "brush-tool") {
+            myData.isDrawing = true;
+            
+            const touch = e.touches[0];
+            
+            const data: UserData = {
+                id: $socketStore.id,
+                pos: { x: myData.pos.x, y: myData.pos.y },
+                isDrawing: myData.isDrawing,
+                color: myData.color,
+                width: myData.width
+            }
+
+            const draw: Draw = {
+                id: myData.id,
+                width: myData.width,
+                color: myData.color,
+                from: { x: myData.pos.x, y: myData.pos.y },
+                to: { x: myData.pos.x, y: myData.pos.y }
+            }
+    
+            drawLine(draw);
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
+        }
+    }
+
     const mouseUpEvent = (e: MouseEvent) => {
-        e.preventDefault();
-        isDown = false;
-        myData.isDrawing = false;
-    }
-
-    const mouseLeaveEvent = (e: MouseEvent) => {
-        e.preventDefault();
-        isDown = false;
-        myData.isDrawing = false;
-    }
-
-    const mouseOutEvent = (e: MouseEvent) => {
         e.preventDefault();
         isDown = false;
         myData.isDrawing = false;
@@ -190,7 +215,7 @@
 
     const mouseMoveEvent = (e: MouseEvent) => {
         e.preventDefault();
-        
+
         if (seletedTool === "move-tool" && isDown) {
             canvasBox.style.left = `${canvasBox.offsetLeft + (e.clientX - canvasBox.offsetLeft) - myData.pos.x}px`;
             canvasBox.style.top = `${canvasBox.offsetTop + (e.clientY - canvasBox.offsetTop) - myData.pos.y}px`;
@@ -216,6 +241,45 @@
                 to: {
                     x: e.clientX - canvasBox.offsetLeft + window.scrollX, 
                     y: e.clientY - canvasBox.offsetTop + window.scrollY
+                }
+            }
+            drawLine(draw);
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
+        } else {
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: undefined });
+        }
+        myData = data;
+    }
+
+    const touchMoveEvent = (e: TouchEvent) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+
+        if (seletedTool === "move-tool" && isDown) {
+            canvasBox.style.left = `${canvasBox.offsetLeft + (touch.clientX - canvasBox.offsetLeft) - myData.pos.x}px`;
+            canvasBox.style.top = `${canvasBox.offsetTop + (touch.clientY - canvasBox.offsetTop) - myData.pos.y}px`;
+        }
+
+        const data: UserData = {
+            id: $socketStore.id,
+            pos: {
+                x: touch.clientX - canvasBox.offsetLeft + window.scrollX,
+                y: touch.clientY - canvasBox.offsetTop + window.scrollY
+            },
+            isDrawing: myData.isDrawing,
+            color: myData.color,
+            width: myData.width
+        }
+
+        if (myData.isDrawing && drawingOn) {
+            const draw: Draw = {
+                id: myData.id,
+                width: myData.width,
+                color: myData.color,
+                from: { x: myData.pos.x, y: myData.pos.y },
+                to: {
+                    x: touch.clientX - canvasBox.offsetLeft + window.scrollX, 
+                    y: touch.clientY - canvasBox.offsetTop + window.scrollY
                 }
             }
             drawLine(draw);
