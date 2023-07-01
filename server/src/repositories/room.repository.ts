@@ -10,6 +10,11 @@ export class RoomRepository {
 
     pushRoom(id: string) {
         this.rooms.set(id, new Room());
+        for (const [id, room] of this.rooms) {
+            if (room.users.users.length === 0) {
+                this.rooms.delete(id);
+            }
+        }
     }
 
     popRoom(id: string): void {
