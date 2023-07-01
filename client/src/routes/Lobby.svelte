@@ -50,8 +50,12 @@
         getCanvas();
         
         canvasBox = document.getElementById("canvas-box") as HTMLDivElement;
+        
         canvas = document.getElementById("canvas") as HTMLCanvasElement;
         context = canvas.getContext("2d") as CanvasRenderingContext2D;
+        context.fillStyle = "rgb(255, 255, 255)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
         canvasMouse = document.getElementById("canvas-mouse") as HTMLCanvasElement;
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
         
