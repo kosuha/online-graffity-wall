@@ -71,15 +71,15 @@
         
         $socketStore.on("join", (data: UserData) => {
             users.push(data);
-        })
+        });
 
         $socketStore.on("disconnected", (id: string) => {
             users = users.filter(user => user.id !== id);
-        })
+        });
 
         $socketStore.on("leave", (id: string) => {
             users = users.filter(user => user.id !== id);
-        })
+        });
 
         $socketStore.on("mousemove", (data: any) => {
             if (data.draw !== undefined) {
@@ -91,7 +91,9 @@
                     return ;
                 }
             }
-        })
+        });
+
+        selectedToolButtonDesign();
 
         intervalId = setInterval(drawMouse, 0.1);
     });
@@ -386,13 +388,12 @@
     const toolButtonEvent = (e: any) => {
         seletedTool = e.target.id;
 
-        if (seletedTool === "select-tool") {
-            canvasMouse.style.cursor = "pointer";
-        } else if (seletedTool === "move-tool") {
+        if (seletedTool === "move-tool") {
             canvasMouse.style.cursor = "move";
         } else if (seletedTool === "brush-tool") {
             canvasMouse.style.cursor = "crosshair";
         }
+        selectedToolButtonDesign();
     }
 
     const keydownEvent = (e) => {
@@ -402,6 +403,7 @@
                 preSeletedTool = seletedTool;
                 seletedTool = "move-tool";
                 canvasMouse.style.cursor = "move";
+                selectedToolButtonDesign();
             }
         }
     }
@@ -409,13 +411,30 @@
     const keyupEvent = (e) => {
         if (e.key === ' ' && seletedTool === "move-tool") {
             seletedTool = preSeletedTool;
-            if (seletedTool === "select-tool") {
-                canvasMouse.style.cursor = "pointer";
-            } else if (seletedTool === "move-tool") {
+            if (seletedTool === "move-tool") {
                 canvasMouse.style.cursor = "move";
             } else if (seletedTool === "brush-tool") {
                 canvasMouse.style.cursor = "crosshair";
             }
+            selectedToolButtonDesign();
+        }
+    }
+
+    const selectedToolButtonDesign = () => {
+        const move = document.getElementById("move-tool") as HTMLButtonElement;
+        const brush = document.getElementById("brush-tool") as HTMLButtonElement;
+
+        move.style.color = "black";
+        move.style.border = "1px solid black";
+        brush.style.color = "black";
+        brush.style.border = "1px solid black";
+ 
+        if (seletedTool === "move-tool") {
+            move.style.color = "blue";
+            move.style.border = "1px solid blue";   
+        } else if (seletedTool === "brush-tool") {
+            brush.style.color = "blue";
+            brush.style.border = "1px solid blue";   
         }
     }
 

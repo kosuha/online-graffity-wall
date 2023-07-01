@@ -86,15 +86,15 @@
 
         $socketStore.on("join", (data: UserData) => {
             users.push(data);
-        })
+        });
 
         $socketStore.on("disconnected", (id: string) => {
             users = users.filter(user => user.id !== id);
-        })
+        });
 
         $socketStore.on("leave", (id: string) => {
             users = users.filter(user => user.id !== id);
-        })
+        });
 
         $socketStore.on("mousemove", (data: any) => {
             if (data.draw !== undefined) {
@@ -106,7 +106,9 @@
                     return ;
                 }
             }
-        })
+        });
+
+        selectedToolButtonDesign();
 
         $socketStore.on("clear", () => {
             context.clearRect(0, 0, canvas.width, canvas.height);
@@ -307,7 +309,7 @@
         }
         myData = data;
     }
-    
+
     const getImage = () => {
         fetch('/image', {
             method: 'POST',
@@ -451,6 +453,7 @@
         } else if (seletedTool === "brush-tool") {
             canvasMouse.style.cursor = "crosshair";
         }
+        selectedToolButtonDesign();
     }
 
     const keydownEvent = (e) => {
@@ -460,6 +463,7 @@
                 preSeletedTool = seletedTool;
                 seletedTool = "move-tool";
                 canvasMouse.style.cursor = "move";
+                selectedToolButtonDesign();
             }
         }
     }
@@ -474,6 +478,31 @@
             } else if (seletedTool === "brush-tool") {
                 canvasMouse.style.cursor = "crosshair";
             }
+            selectedToolButtonDesign();
+        }
+    }
+
+    const selectedToolButtonDesign = () => {
+        const select = document.getElementById("select-tool") as HTMLButtonElement;
+        const move = document.getElementById("move-tool") as HTMLButtonElement;
+        const brush = document.getElementById("brush-tool") as HTMLButtonElement;
+
+        select.style.color = "black";
+        select.style.border = "1px solid black";
+        move.style.color = "black";
+        move.style.border = "1px solid black";
+        brush.style.color = "black";
+        brush.style.border = "1px solid black";
+
+        if (seletedTool === "select-tool") {
+            select.style.color = "blue";
+            select.style.border = "1px solid blue";    
+        } else if (seletedTool === "move-tool") {
+            move.style.color = "blue";
+            move.style.border = "1px solid blue";   
+        } else if (seletedTool === "brush-tool") {
+            brush.style.color = "blue";
+            brush.style.border = "1px solid blue";   
         }
     }
 
@@ -567,6 +596,10 @@
         height: 40px;
         margin-right: 5px;
         border-radius: 10px;
+    }
+
+    :global(.selected-tool) {
+
     }
 
     #brush-set {
