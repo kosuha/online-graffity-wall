@@ -56,16 +56,15 @@
         contextMouse = canvasMouse.getContext("2d") as CanvasRenderingContext2D;
         
         canvasMouse.addEventListener("mousedown", mouseDownEvent);
-        canvasMouse.addEventListener("touchstart", touchStartEvent);
-        
         canvasMouse.addEventListener("mousemove", mouseMoveEvent);
-        canvasMouse.addEventListener("touchmove", touchMoveEvent);
-
         canvasMouse.addEventListener("mouseup", mouseUpEvent);
-        canvasMouse.addEventListener("touchend", mouseUpEvent);
         canvasMouse.addEventListener("mouseleave", mouseUpEvent);
         canvasMouse.addEventListener("mouseout", mouseUpEvent);
-        canvasMouse.addEventListener("touchcancle", mouseUpEvent);
+        
+        canvasMouse.addEventListener("touchstart", touchStartEvent);
+        canvasMouse.addEventListener("touchmove", touchMoveEvent);
+        canvasMouse.addEventListener("touchend", touchEndEvent);
+        canvasMouse.addEventListener("touchcancle", touchEndEvent);
 
         document.body.addEventListener('keydown', keydownEvent);
         document.body.addEventListener('keyup', keyupEvent);
@@ -126,65 +125,42 @@
     const mouseDownEvent = (e: MouseEvent) => {
         e.preventDefault();
 
-        if (seletedTool === "move-tool") {
-            isDown = true;
+        const data: UserData = {
+            id: $socketStore.id,
+            pos: {
+                x: e.clientX - canvasBox.offsetLeft + window.scrollX,
+                y: e.clientY - canvasBox.offsetTop + window.scrollY
+            },
+            isDrawing: myData.isDrawing,
+            color: myData.color,
+            width: myData.width
         }
-
-        if (drawingOn && seletedTool === "brush-tool") {
-            myData.isDrawing = true;
-
-            const data: UserData = {
-                id: $socketStore.id,
-                pos: { x: myData.pos.x, y: myData.pos.y },
-                isDrawing: myData.isDrawing,
-                color: myData.color,
-                width: myData.width
-            }
-
-            const draw: Draw = {
-                id: myData.id,
-                width: myData.width,
-                color: myData.color,
-                from: { x: myData.pos.x, y: myData.pos.y },
-                to: { x: myData.pos.x, y: myData.pos.y }
-            }
-    
-            drawLine(draw);
-            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
-        }
-    }
-
-    const touchStartEvent = (e: TouchEvent) => {
-        e.preventDefault();
 
         if (seletedTool === "move-tool") {
             isDown = true;
         }
 
         if (drawingOn && seletedTool === "brush-tool") {
-            myData.isDrawing = true;
-            
-            const touch = e.touches[0];
-            
-            const data: UserData = {
-                id: $socketStore.id,
-                pos: { x: myData.pos.x, y: myData.pos.y },
-                isDrawing: myData.isDrawing,
-                color: myData.color,
-                width: myData.width
-            }
+            data.isDrawing = true;
 
             const draw: Draw = {
                 id: myData.id,
                 width: myData.width,
                 color: myData.color,
-                from: { x: myData.pos.x, y: myData.pos.y },
-                to: { x: myData.pos.x, y: myData.pos.y }
+                from: {
+                    x: e.clientX - canvasBox.offsetLeft + window.scrollX,
+                    y: e.clientY - canvasBox.offsetTop + window.scrollY
+                },
+                to: {
+                    x: e.clientX - canvasBox.offsetLeft + window.scrollX,
+                    y: e.clientY - canvasBox.offsetTop + window.scrollY
+                }
             }
     
             drawLine(draw);
             $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
         }
+        myData = data;
     }
 
     const mouseUpEvent = (e: MouseEvent) => {
@@ -229,6 +205,58 @@
             $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: undefined });
         }
         myData = data;
+    }
+
+    // touch
+
+    const touchStartEvent = (e: TouchEvent) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+
+        const data: UserData = {
+            id: $socketStore.id,
+            pos: {
+                x: touch.clientX - canvasBox.offsetLeft + window.scrollX,
+                y: touch.clientY - canvasBox.offsetTop + window.scrollY
+            },
+            isDrawing: myData.isDrawing,
+            color: myData.color,
+            width: myData.width
+        }
+
+        if (seletedTool === "move-tool") {
+            isDown = true;
+        }
+
+        if (drawingOn && seletedTool === "brush-tool") {
+            data.isDrawing = true;
+
+            const draw: Draw = {
+                id: myData.id,
+                width: myData.width,
+                color: myData.color,
+                from: {
+                    x: touch.clientX - canvasBox.offsetLeft + window.scrollX,
+                    y: touch.clientY - canvasBox.offsetTop + window.scrollY
+                },
+                to: {
+                    x: touch.clientX - canvasBox.offsetLeft + window.scrollX,
+                    y: touch.clientY - canvasBox.offsetTop + window.scrollY
+                }
+            }
+            drawLine(draw);
+            $socketStore.emit("mousemove", { roomId: roomId, user: data, draw: draw });
+        }
+        myData = data;
+        console.log(myData.isDrawing);
+    }
+
+    const touchEndEvent = (e: TouchEvent) => {
+        e.preventDefault();
+        isDown = false;
+        myData.isDrawing = false;
+        console.log("end");
+        
     }
 
     const touchMoveEvent = (e: TouchEvent) => {
