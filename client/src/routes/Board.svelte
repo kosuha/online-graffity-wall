@@ -139,13 +139,11 @@
             canvasList.get(data.id).pos = data.pos;
             canvasList.get(data.id).canvas.style.left = `${data.pos.x}px`;
             canvasList.get(data.id).canvas.style.top = `${data.pos.y}px`;
-            // canvasList.get(data.id).canvas.style.zIndex = `${zIndex}`;
         })
 
         $socketStore.on("layerMoveStart", (data) => {
             canvasList.get(data.id1).isSelected = true;
             canvasList.get(data.id1).canvas.style.zIndex = `${zIndex}`;
-            console.log("on start", zIndex);
             const temp: CanvasData = canvasList.get(data.id1);
             
             zIndex++;
@@ -233,7 +231,6 @@
             if (mySelectedLayerKey) {
                 canvasList.get(mySelectedLayerKey).isSelected = true;
                 canvasList.get(mySelectedLayerKey).canvas.style.zIndex = `${zIndex}`;
-                console.log("mouseDown", zIndex);
                 zIndex++;
                 const mySelectedLayer = canvasList.get(mySelectedLayerKey);
                 canvasList.delete(mySelectedLayerKey);
@@ -428,7 +425,6 @@
         drawCanvas.style.top = "0";
         drawCanvas.style.left = "0";
         drawCanvas.style.zIndex = `${zIndex}`;
-        console.log("on start add canvas", zIndex);
         zIndex++;
         drawCanvas.style.margin = "0";
         drawCanvas.style.padding = "0";
@@ -484,7 +480,6 @@
                         tempCanvas.style.margin = "0";
                         tempCanvas.style.padding = "0";
                         tempCanvas.style.zIndex = `${zIndex}`;
-                        console.log("get", zIndex);
                         
                         zIndex++;
                         
@@ -601,7 +596,6 @@
             canvasBox.insertBefore(tempCanvas, canvasBox.children[1]);
             tempCanvas.style.position = "absolute";
             tempCanvas.style.zIndex = `${zIndex}`;
-            console.log("load", zIndex);
             
             zIndex++;
             tempCanvas.style.top = "0";
