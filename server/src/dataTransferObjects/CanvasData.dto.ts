@@ -8,13 +8,16 @@ export class CanvasData {
     height: number;
     canvas: Canvas;
     ctx: any;
+    isLayer: boolean;
+    isSelected: boolean;
 
-    constructor (pos: Position, width: number, height: number) {
+    constructor (pos: Position, width: number, height: number, isLayer: boolean) {
         this.pos = pos;
         this.width = width;
         this.height = height;
         this.canvas = createCanvas(width, height);
         this.ctx = this.canvas.getContext("2d");
+        this.isLayer = isLayer;
     }
 
     updateDraw(draw: Draw) {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { querystring, push, location } from 'svelte-spa-router';
+    import { querystring, push } from 'svelte-spa-router';
     import { socketStore } from "../store";
     import { nanoid } from 'nanoid';
 
@@ -26,11 +26,14 @@
     }
 
     interface CanvasData {
+        id: string;
         pos: Position;
         width: number;
         height: number;
         canvas: HTMLCanvasElement;
         ctx: CanvasRenderingContext2D;
+        isLayer: boolean;
+        isSelected: boolean;
     }
     
     let canvasBox: HTMLDivElement;
@@ -39,8 +42,7 @@
     let canvasMouse: HTMLCanvasElement;
     let contextMouse: CanvasRenderingContext2D;
 
-    let canvasList: CanvasData[] = [];
-    // 캔버스 리스트로 전환하기...
+    let canvasList: Map<string, CanvasData> = new Map();
 
     let myData: UserData = {
         id: $socketStore.id,
@@ -58,6 +60,8 @@
     let zIndex: number = 1;
     let seletedTool: string = "move-tool";
     let preSeletedTool: string = "move-tool";
+    let mouseOnLayerKey: string;
+    let mySelectedLayerKey: string;
 
     $: {
         let searchParams = new URLSearchParams($querystring);
@@ -123,15 +127,38 @@
             }
         });
 
-        $socketStore.on("loadImage", (image: string) => {
-            loadImage(image);
+        $socketStore.on("loadImage", (data) => {
+            loadImage(data.image, data.id1, data.id2);
         });
 
-        selectedToolButtonDesign();
-
         $socketStore.on("clear", () => {
-            clear();
+            clear("0");
         })
+
+        $socketStore.on("layerMove", (data) => {
+            canvasList.get(data.id).pos = data.pos;
+            canvasList.get(data.id).canvas.style.left = `${data.pos.x}px`;
+            canvasList.get(data.id).canvas.style.top = `${data.pos.y}px`;
+            // canvasList.get(data.id).canvas.style.zIndex = `${zIndex}`;
+        })
+
+        $socketStore.on("layerMoveStart", (data) => {
+            canvasList.get(data.id1).isSelected = true;
+            canvasList.get(data.id1).canvas.style.zIndex = `${zIndex}`;
+            console.log("on start", zIndex);
+            const temp: CanvasData = canvasList.get(data.id1);
+            
+            zIndex++;
+            canvasList.delete(data.id1);
+            canvasList.set(data.id1, temp);
+            addNewCanvas(data.id2);
+        })
+
+        $socketStore.on("layerMoveEnd", (data) => {
+            canvasList.get(data.id).isSelected = false;
+        })
+
+        selectedToolButtonDesign();
 
         intervalId = setInterval(drawMouse, 0.1);
     });
@@ -151,7 +178,6 @@
             contextMouse.lineWidth = 3;
             contextMouse.stroke();
             contextMouse.closePath();
-            
         });
 
         if (seletedTool === "brush-tool") {
@@ -160,6 +186,37 @@
             contextMouse.fillStyle = myData.color;
             contextMouse.fill();
             contextMouse.closePath();
+        } else if (seletedTool === "select-tool") {
+            mouseOnLayerKey = undefined;
+            for (let [key, value] of canvasList) {
+                if (value.isLayer) {
+                    if (value.isSelected) {
+                        contextMouse.strokeStyle = "yellow";
+                    } else {
+                        contextMouse.strokeStyle = "blue";
+                    }
+                    contextMouse.strokeRect(value.pos.x, value.pos.y, value.width, value.height);
+                }
+            }
+            
+            if (mySelectedLayerKey === undefined) {
+                for (let [key, value] of canvasList) {
+                    if (value.isLayer && !value.isSelected) {
+                        if (value.pos.x < myData.pos.x 
+                            && myData.pos.x < value.pos.x + value.width
+                            && value.pos.y < myData.pos.y 
+                            && myData.pos.y < value.pos.y + value.height
+                        ) {
+                            contextMouse.strokeStyle = "green";
+                            contextMouse.strokeRect(value.pos.x, value.pos.y, value.width, value.height);
+                            mouseOnLayerKey = key;
+                        }
+                    }
+                }
+            } else {
+                contextMouse.strokeStyle = "green";
+                contextMouse.strokeRect(canvasList.get(mySelectedLayerKey).pos.x, canvasList.get(mySelectedLayerKey).pos.y, canvasList.get(mySelectedLayerKey).width, canvasList.get(mySelectedLayerKey).height);
+            }
         }
     }
 
@@ -168,6 +225,23 @@
 
         if (seletedTool === "move-tool") {
             isDown = true;
+        }
+
+        if (seletedTool === "select-tool") {
+            isDown = true;
+            mySelectedLayerKey = mouseOnLayerKey;
+            if (mySelectedLayerKey) {
+                canvasList.get(mySelectedLayerKey).isSelected = true;
+                canvasList.get(mySelectedLayerKey).canvas.style.zIndex = `${zIndex}`;
+                console.log("mouseDown", zIndex);
+                zIndex++;
+                const mySelectedLayer = canvasList.get(mySelectedLayerKey);
+                canvasList.delete(mySelectedLayerKey);
+                canvasList.set(mySelectedLayerKey, mySelectedLayer);
+                const id = nanoid();
+                addNewCanvas(id);
+                $socketStore.emit("layerMoveStart", { roomId: roomId, user: myData, id1: mySelectedLayer.id, id2: id});
+            }
         }
 
         if (drawingOn && seletedTool === "brush-tool") {
@@ -196,6 +270,13 @@
 
     const mouseUpEvent = (e: MouseEvent) => {
         e.preventDefault();
+        if (seletedTool === "select-tool" && isDown) {
+            if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
+                canvasList.get(mySelectedLayerKey).isSelected = false;
+                $socketStore.emit("layerMoveEnd", { roomId: roomId, user: myData, id: mySelectedLayerKey });
+                mySelectedLayerKey = undefined;
+            }
+        }
         isDown = false;
         myData.isDrawing = false;
     }
@@ -206,6 +287,18 @@
         if (seletedTool === "move-tool" && isDown) {
             canvasBox.style.left = `${canvasBox.offsetLeft + (e.clientX - canvasBox.offsetLeft) - myData.pos.x}px`;
             canvasBox.style.top = `${canvasBox.offsetTop + (e.clientY - canvasBox.offsetTop) - myData.pos.y}px`;
+        }
+
+        if (seletedTool === "select-tool" && isDown) {
+            if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
+                canvasList.get(mySelectedLayerKey).pos.x += (e.clientX - canvasBox.offsetLeft) - myData.pos.x;
+                canvasList.get(mySelectedLayerKey).pos.y += (e.clientY - canvasBox.offsetTop) - myData.pos.y;
+                canvasList.get(mySelectedLayerKey).canvas.style.left = `${canvasList.get(mySelectedLayerKey).pos.x}px`;
+                canvasList.get(mySelectedLayerKey).canvas.style.top = `${canvasList.get(mySelectedLayerKey).pos.y}px`;
+                
+                
+                $socketStore.emit("layerMove", {roomId, user: myData, id: mySelectedLayerKey, pos: canvasList.get(mySelectedLayerKey).pos});
+            }
         }
 
         const data: UserData = {
@@ -326,6 +419,40 @@
         myData = data;
     }
 
+    const addNewCanvas = (id: string) => {
+        const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
+        drawCanvas.width = 2000;
+        drawCanvas.height = 2000;
+        drawCanvas.style.position = "absolute";
+        drawCanvas.style.top = "0";
+        drawCanvas.style.left = "0";
+        drawCanvas.style.zIndex = `${zIndex}`;
+        console.log("on start add canvas", zIndex);
+        zIndex++;
+        drawCanvas.style.margin = "0";
+        drawCanvas.style.padding = "0";
+
+        const newCanvasData = {
+            id: id,
+            pos: {x: 0, y: 0},
+            width: drawCanvas.width,
+            height:drawCanvas.height,
+            canvas: drawCanvas,
+            ctx: drawCtx,
+            isLayer: false,
+            isSelected: false
+        };
+
+        canvasList.set(newCanvasData.id, newCanvasData);
+        canvasBox.appendChild(drawCanvas);
+        
+        canvas = drawCanvas;
+        context = drawCtx;
+
+        return newCanvasData;
+    }
+
     const getCanvas = () => {
         fetch('/canvas', {
             method: 'POST',
@@ -339,32 +466,37 @@
         .then(response => response.json())
         .then((data) => {
             if (data.canvas !== undefined) {
-                canvasList = [];
+                canvasList.clear();
                 data.canvas.forEach(c => {
                     let img = new Image();
                     img.onload = function() {
                         const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
                         const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
 
+                        canvasBox.appendChild(tempCanvas);
                         let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
                         tempCanvas.width = img.width * scale;
                         tempCanvas.height = img.height * scale;
                         tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
                         tempCanvas.style.position = "absolute";
-                        tempCanvas.style.top = c.pos.y;
-                        tempCanvas.style.left = c.pos.x;
-                        tempCanvas.style.zIndex = `${zIndex}`;
-                        zIndex++;
+                        tempCanvas.style.top = `${c.pos.y}px`;
+                        tempCanvas.style.left = `${c.pos.x}px`;
                         tempCanvas.style.margin = "0";
                         tempCanvas.style.padding = "0";
-                        canvasBox.appendChild(tempCanvas);
+                        tempCanvas.style.zIndex = `${zIndex}`;
+                        console.log("get", zIndex);
                         
-                        canvasList.push({
+                        zIndex++;
+                        
+                        canvasList.set(c.id, {
+                            id: c.id,
                             pos: c.pos,
                             width: tempCanvas.width,
                             height: tempCanvas.height,
                             canvas: tempCanvas,
-                            ctx: tempCtx
+                            ctx: tempCtx,
+                            isLayer: c.isLayer,
+                            isSelected: false
                         });
                         canvas = tempCanvas;
                         context = tempCtx;
@@ -428,41 +560,20 @@
     }
 
     const clearButtonEvent = () => {
-        clear();
+        clear("0");
         $socketStore.emit("clear", { roomId: roomId, user: myData });
     }
 
-    const clear = () => {
-        const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
-        const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
-        drawCanvas.width = 2000;
-        drawCanvas.height = 2000;
-        drawCanvas.style.position = "absolute";
-        drawCanvas.style.top = "0";
-        drawCanvas.style.left = "0";
-        zIndex = 1;
-        drawCanvas.style.zIndex = `${zIndex}`;
-        zIndex++;
-        drawCanvas.style.margin = "0";
-        drawCanvas.style.padding = "0";
-        drawCtx.fillStyle = "rgb(255, 255, 255)";
-        drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
-        
+    const clear = (id: string) => {
         canvasList.forEach(c => {
             c.canvas.remove();
         });
-
-        canvasList = [{
-            pos: {x: 0, y: 0},
-            width: drawCanvas.width,
-            height:drawCanvas.height,
-            canvas: drawCanvas,
-            ctx: drawCtx
-        }];
-        canvasBox.appendChild(drawCanvas);
+        zIndex = 1;
+        canvasList.clear();
+        const newCanvas: CanvasData = addNewCanvas(id);
         
-        canvas = drawCanvas;
-        context = drawCtx;
+        newCanvas.ctx.fillStyle = "rgb(255, 255, 255)";
+        newCanvas.ctx.fillRect(0, 0, newCanvas.canvas.width, newCanvas.canvas.height);
     }
 
     const newBoardButtonEvent = () => {
@@ -477,7 +588,7 @@
         a.remove();
     }
 
-    const loadImage = (imageSrc: string) => {
+    const loadImage = (imageSrc: string, id1: string, id2: string) => {
         const img = new Image();
         img.onload = function() {
             const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -490,43 +601,26 @@
             canvasBox.insertBefore(tempCanvas, canvasBox.children[1]);
             tempCanvas.style.position = "absolute";
             tempCanvas.style.zIndex = `${zIndex}`;
+            console.log("load", zIndex);
+            
             zIndex++;
             tempCanvas.style.top = "0";
             tempCanvas.style.left = "0";
             tempCanvas.style.margin = "0";
             tempCanvas.style.padding = "0";
 
-            canvasList.push({
+            canvasList.set(id1, {
+                id: id1,
                 pos: {x: 0, y: 0},
                 width: tempCanvas.width,
                 height: tempCanvas.height,
                 canvas: tempCanvas,
-                ctx: tempCtx
+                ctx: tempCtx,
+                isLayer: true,
+                isSelected: false
             })
 
-            const drawCanvas = document.createElement("canvas") as HTMLCanvasElement;
-            const drawCtx = drawCanvas.getContext("2d") as CanvasRenderingContext2D;
-            drawCanvas.width = 2000;
-            drawCanvas.height = 2000;
-            drawCanvas.style.position = "absolute";
-            drawCanvas.style.top = "0";
-            drawCanvas.style.left = "0";
-            drawCanvas.style.zIndex = `${zIndex}`;
-            zIndex++;
-            drawCanvas.style.margin = "0";
-            drawCanvas.style.padding = "0";
-            canvasBox.insertBefore(drawCanvas, canvasBox.children[1]);
-
-            canvasList.push({
-                pos: {x: 0, y: 0},
-                width: drawCanvas.width,
-                height: drawCanvas.height,
-                canvas: drawCanvas,
-                ctx: drawCtx
-            })
-            
-            canvas = drawCanvas;
-            context = drawCtx;
+            addNewCanvas(id2);
         }
         img.src = imageSrc;
     }
@@ -535,10 +629,14 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             const src = event.target.result as string;
-            loadImage(src);
-            $socketStore.emit("loadImage", { roomId: roomId, user: myData, image: src });
+            const id1 = nanoid();
+            const id2 = nanoid();
+            loadImage(src, id1, id2);
+            $socketStore.emit("loadImage", { roomId: roomId, user: myData, image: src, id1, id2 });
         }
-        reader.readAsDataURL(e.target.files[0]);
+        if (e.target.files[0]) {
+            reader.readAsDataURL(e.target.files[0]);
+        }
     }
 
     const toolButtonEvent = (e: any) => {
@@ -689,10 +787,6 @@
         height: 40px;
         margin-right: 5px;
         border-radius: 10px;
-    }
-
-    :global(.selected-tool) {
-
     }
 
     #brush-set {

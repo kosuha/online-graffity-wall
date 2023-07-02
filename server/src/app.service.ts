@@ -4,6 +4,7 @@ import { UserRepository } from './repositories/user.repository';
 import { Position } from './dataTransferObjects/Position.dto';
 import { Draw } from './dataTransferObjects/Draw.dto';
 import { RoomRepository } from './repositories/room.repository';
+import { CanvasData } from './dataTransferObjects/CanvasData.dto';
 
 @Injectable()
 export class AppService {
@@ -69,7 +70,23 @@ export class AppService {
     return true;
   }
 
-  loadImage(roomId: string, image: string) {
-    this.roomRepository.rooms.get(roomId).loadImage(image);
+  loadImage(roomId: string, image: string, id1: string, id2: string) {
+    this.roomRepository.rooms.get(roomId).loadImage(image, id1, id2);
+  }
+
+  layerMoveStart(roomId: string, id1: string, id2: string) {
+    const newCanvasData: CanvasData = this.roomRepository.rooms.get(roomId).canvasList.get(id1);
+    newCanvasData.isSelected = true;
+    this.roomRepository.rooms.get(roomId).canvasList.delete(id1);
+    this.roomRepository.rooms.get(roomId).canvasList.set(id1, newCanvasData);
+    this.roomRepository.rooms.get(roomId).canvasList.set(id2, new CanvasData({x: 0, y: 0}, 2000, 2000, false));
+  }
+
+  layerMove(roomId: string, id: string, pos: Position) {
+    this.roomRepository.rooms.get(roomId).canvasList.get(id).pos = pos;
+  }
+
+  layerMoveEnd(roomId: string, id: string) {
+    this.roomRepository.rooms.get(roomId).canvasList.get(id).isSelected = false;
   }
 }

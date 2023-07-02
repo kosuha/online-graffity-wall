@@ -4,51 +4,62 @@ import { Draw } from "./Draw.dto";
 import { ImageData } from "./ImageData.dto";
 import { CanvasData } from "./CanvasData.dto";
 import { UserData } from "./UserData.dto";
+import { imageSize } from 'image-size';
 
 export class Room {
-    canvasList: CanvasData[];
+    canvasList: Map<string, CanvasData>;
     users: UserRepository;
 
     constructor() {
-        this.canvasList = [new CanvasData({x: 0, y: 0}, 2000, 2000)];
+        this.canvasList = new Map();
+        this.canvasList.set("0", new CanvasData({x: 0, y: 0}, 2000, 2000, false));
         this.users = new UserRepository();
-        this.canvasList[0].ctx.fillStyle = "rgb(255, 255, 255)";
-        this.canvasList[0].ctx.fillRect(0, 0, this.canvasList[0].width, this.canvasList[0].height);
+        this.canvasList.get("0").ctx.fillStyle = "rgb(255, 255, 255)";
+        this.canvasList.get("0").ctx.fillRect(0, 0, 2000, 2000);
     }
     
     getCanvas() {
         let ret = [];
-        for (let i = 0; i < this.canvasList.length; i++) {
+        for (let [key, value] of this.canvasList) {
             ret.push({
-                pos: this.canvasList[i].pos,
-                src: this.canvasList[i].canvas.toDataURL(),
+                id: key,
+                pos: value.pos,
+                src: value.canvas.toDataURL(),
+                isLayer: value.isLayer
             });
         }
         return ret;
     }
 
     clear() {
-        for (let i = 0; i < this.canvasList.length; i++) {
-            this.canvasList[i].clear();
+        for (let [key, value] of this.canvasList) {
+            value.clear();
         }
-        this.canvasList = [new CanvasData({x: 0, y: 0}, 2000, 2000)];
-        this.canvasList[0].ctx.fillStyle = "rgb(255, 255, 255)";
-        this.canvasList[0].ctx.fillRect(0, 0, this.canvasList[0].canvas.width, this.canvasList[0].canvas.height);
+        this.canvasList.clear();
+        this.canvasList.set("0", new CanvasData({x: 0, y: 0}, 2000, 2000, false));
+        this.canvasList.get("0").ctx.fillStyle = "rgb(255, 255, 255)";
+        this.canvasList.get("0").ctx.fillRect(0, 0, 2000, 2000);
     }
 
     updataDraw(draw: Draw) {
-        this.canvasList[this.canvasList.length - 1].updateDraw(draw);
+        let lastEntry: CanvasData;
+        for (let [key, value] of this.canvasList) {
+            lastEntry = value;
+        }
+        lastEntry.updateDraw(draw);
     }
 
-    loadImage(image: string) {
-        const img = new Image();
+    loadImage(image: string, id1: string, id2: string) {
+        let img = new Image();
         img.onload = () => {
-            const newCanvas = new CanvasData({x: 0, y: 0}, img.width, img.height);
+            const newCanvas = new CanvasData({x: 0, y: 0}, img.width, img.height, true);
             newCanvas.ctx.drawImage(img, 0, 0, img.width, img.height);
-            this.canvasList.push(newCanvas);
-            this.canvasList.push(new CanvasData({x: 0, y: 0}, img.width, img.height));
+            this.canvasList.set(id1, newCanvas);
+            this.canvasList.set(id2, new CanvasData({x: 0, y: 0}, 2000, 2000, false));
+        }
+        img.onerror = (error) => {
+            console.error('Image loading error: ', error);
         }
         img.src = image;
-
     }
 }
