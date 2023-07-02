@@ -294,7 +294,6 @@
                 canvasList.get(mySelectedLayerKey).canvas.style.left = `${canvasList.get(mySelectedLayerKey).pos.x}px`;
                 canvasList.get(mySelectedLayerKey).canvas.style.top = `${canvasList.get(mySelectedLayerKey).pos.y}px`;
                 
-                
                 $socketStore.emit("layerMove", {roomId, user: myData, id: mySelectedLayerKey, pos: canvasList.get(mySelectedLayerKey).pos});
             }
         }
@@ -350,6 +349,22 @@
             isDown = true;
         }
 
+        if (seletedTool === "select-tool") {
+            isDown = true;
+            mySelectedLayerKey = mouseOnLayerKey;
+            if (mySelectedLayerKey) {
+                canvasList.get(mySelectedLayerKey).isSelected = true;
+                canvasList.get(mySelectedLayerKey).canvas.style.zIndex = `${zIndex}`;
+                zIndex++;
+                const mySelectedLayer = canvasList.get(mySelectedLayerKey);
+                canvasList.delete(mySelectedLayerKey);
+                canvasList.set(mySelectedLayerKey, mySelectedLayer);
+                const id = nanoid();
+                addNewCanvas(id);
+                $socketStore.emit("layerMoveStart", { roomId: roomId, user: data, id1: mySelectedLayer.id, id2: id});
+            }
+        }
+
         if (drawingOn && seletedTool === "brush-tool") {
             data.isDrawing = true;
 
@@ -374,6 +389,13 @@
 
     const touchEndEvent = (e: TouchEvent) => {
         e.preventDefault();
+        if (seletedTool === "select-tool" && isDown) {
+            if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
+                canvasList.get(mySelectedLayerKey).isSelected = false;
+                $socketStore.emit("layerMoveEnd", { roomId: roomId, user: myData, id: mySelectedLayerKey });
+                mySelectedLayerKey = undefined;
+            }
+        }
         isDown = false;
         myData.isDrawing = false;
     }
@@ -385,6 +407,17 @@
         if (seletedTool === "move-tool" && isDown) {
             canvasBox.style.left = `${canvasBox.offsetLeft + (touch.clientX - canvasBox.offsetLeft) - myData.pos.x}px`;
             canvasBox.style.top = `${canvasBox.offsetTop + (touch.clientY - canvasBox.offsetTop) - myData.pos.y}px`;
+        }
+
+        if (seletedTool === "select-tool" && isDown) {
+            if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
+                canvasList.get(mySelectedLayerKey).pos.x += (touch.clientX - canvasBox.offsetLeft) - myData.pos.x;
+                canvasList.get(mySelectedLayerKey).pos.y += (touch.clientY - canvasBox.offsetTop) - myData.pos.y;
+                canvasList.get(mySelectedLayerKey).canvas.style.left = `${canvasList.get(mySelectedLayerKey).pos.x}px`;
+                canvasList.get(mySelectedLayerKey).canvas.style.top = `${canvasList.get(mySelectedLayerKey).pos.y}px`;
+                
+                $socketStore.emit("layerMove", {roomId, user: myData, id: mySelectedLayerKey, pos: canvasList.get(mySelectedLayerKey).pos});
+            }
         }
 
         const data: UserData = {
