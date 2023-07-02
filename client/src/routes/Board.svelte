@@ -729,10 +729,10 @@
 <div id="menu">
     <button id="burger-menu" on:click={toggleBurgerMenu}>☰</button>
     {#if isBurgerMenuOpen}
-        <button id="clear" on:click={clearButtonEvent}>Clear</button>
-        <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
-        <button id="save" on:click={saveEvent}>Save</button>
-        <button id="load" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
+        <button id="clear" class="menu-item" on:click={clearButtonEvent}>Clear</button>
+        <button id="new-board" class="menu-item" on:click={newBoardButtonEvent}>New Board</button>
+        <button id="save" class="menu-item" on:click={saveEvent}>Save</button>
+        <button id="load" class="menu-item" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
         <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/>
     {/if}
 </div>
