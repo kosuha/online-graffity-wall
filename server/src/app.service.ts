@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { UserData } from './dataTransferObjects/UserData.dto';
-import { UserRepository } from './repositories/user.repository';
 import { Position } from './dataTransferObjects/Position.dto';
 import { Draw } from './dataTransferObjects/Draw.dto';
 import { RoomRepository } from './repositories/room.repository';

@@ -3,11 +3,9 @@ import {
     WebSocketGateway,
     OnGatewayConnection,
     OnGatewayDisconnect,
-    WsResponse,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { UserData } from './dataTransferObjects/UserData.dto';
-import { UserRepository } from './repositories/user.repository';
 import { Draw } from './dataTransferObjects/Draw.dto';
 import { AppService } from './app.service';
 import { RoomRepository } from './repositories/room.repository';

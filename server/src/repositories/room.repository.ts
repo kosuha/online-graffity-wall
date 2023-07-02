@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createCanvas } from 'canvas';
-import { Draw } from 'src/dataTransferObjects/Draw.dto';
 import { Room } from 'src/dataTransferObjects/Room.dto';
-import { UserRepository } from './user.repository';
 
 @Injectable()
 export class RoomRepository {

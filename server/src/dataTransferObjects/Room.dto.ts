@@ -1,10 +1,7 @@
-import { Canvas, Image, createCanvas } from "canvas";
+import { Image } from "canvas";
 import { UserRepository } from "src/repositories/user.repository";
 import { Draw } from "./Draw.dto";
-import { ImageData } from "./ImageData.dto";
 import { CanvasData } from "./CanvasData.dto";
-import { UserData } from "./UserData.dto";
-import { imageSize } from 'image-size';
 
 export class Room {
     canvasList: Map<string, CanvasData>;
