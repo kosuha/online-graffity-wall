@@ -62,6 +62,7 @@
     let preSeletedTool: string = "move-tool";
     let mouseOnLayerKey: string;
     let mySelectedLayerKey: string;
+    let isBurgerMenuOpen = false;
 
     $: {
         let searchParams = new URLSearchParams($querystring);
@@ -696,6 +697,10 @@
         }
     }
 
+    const toggleBurgerMenu = () => {
+        isBurgerMenuOpen = !isBurgerMenuOpen;
+    }
+
 </script>
 
 <div id="canvas-box">
@@ -722,11 +727,14 @@
     </div>
 </div>
 <div id="menu">
-    <button id="clear" on:click={clearButtonEvent}>Clear</button>
-    <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
-    <button id="save" on:click={saveEvent}>Save</button>
-    <button id="load" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
-    <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/>
+    <button id="burger-menu" on:click={toggleBurgerMenu}>☰</button>
+    {#if isBurgerMenuOpen}
+        <button id="clear" on:click={clearButtonEvent}>Clear</button>
+        <button id="new-board" on:click={newBoardButtonEvent}>New Board</button>
+        <button id="save" on:click={saveEvent}>Save</button>
+        <button id="load" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
+        <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/>
+    {/if}
 </div>
 
 <style>
@@ -737,12 +745,17 @@
         margin: 0px;
     }
 
-    #canvas-mouse {
+    #canvas, #canvas-mouse {
         position: absolute;
         top: 0;
         left: 0;
         margin: 0px;
         box-sizing: border-box;
+    }
+
+    #canvas {
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        z-index: 0;
     }
 
     #canvas-mouse {
@@ -753,16 +766,6 @@
 
     #menu, #tools {
         margin: 5px;
-    }
-
-    #menu {
-        position: fixed;
-        top: 0px;
-        right: 0px;
-        z-index: 100000000;
-        display: flex;
-        flex-direction: row;
-        padding-right: 10px;
     }
 
     #tools {
@@ -796,19 +799,44 @@
         height: 40px;
     }
 
-    #menu > button {
-        margin-right: 5px;
+    #menu {
+        position: fixed;
+        top: 0px;
+        right: 0px;
+        z-index: 100000000;
+        display: flex;
+        flex-direction: column;
+        margin-top: 10px;
+        margin-right: 10px;
+        align-items: end;
+    }
+
+    #burger-menu {
+        height: 50px;
+        width: 50px;
+        padding-bottom: 4px;
         border-radius: 500px;
-        padding-left: 10px;
-        padding-right: 10px;
+        border: 1px solid black;
+        margin-bottom: 5px;
+        font-size: 30px;
+        font-weight: 300;
+        text-align: center;
+    }
+
+    #burger-menu:hover {
+        color: blue;
+        border: 1px solid blue;
+    }
+
+    .menu-item {
+        height: 40px;
+        margin-bottom: 5px;
+        border-radius: 10px;
         border: 1px solid black;
     }
 
-    #menu > button:hover {
+    .menu-item:hover {
         margin-right: 5px;
-        border-radius: 500px;
-        padding-left: 10px;
-        padding-right: 10px;
         border: 1px solid blue;
         color: blue;
     }
@@ -845,6 +873,20 @@
         outline: none;
         accent-color: #000000;
         margin: 10px;
+    }
+
+    @media (max-aspect-ratio: 1/1) {
+        #menu {
+            position: fixed;
+            bottom: 0px;
+            right: 0px;
+            z-index: 100000000;
+            display: flex;
+            flex-direction: column-reverse;
+            margin-top: 10px;
+            margin-right: 10px;
+            align-items: end;
+        }
     }
 
 </style>
