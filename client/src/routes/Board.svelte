@@ -128,34 +128,34 @@
             }
         });
 
-        $socketStore.on("loadImage", (data) => {
-            loadImage(data.image, data.id1, data.id2);
-        });
+        // $socketStore.on("loadImage", (data) => {
+        //     loadImage(data.image, data.id1, data.id2);
+        // });
 
         $socketStore.on("clear", () => {
             clear("0");
         })
 
-        $socketStore.on("layerMove", (data) => {
-            canvasList.get(data.id).pos = data.pos;
-            canvasList.get(data.id).canvas.style.left = `${data.pos.x}px`;
-            canvasList.get(data.id).canvas.style.top = `${data.pos.y}px`;
-        })
+        // $socketStore.on("layerMove", (data) => {
+        //     canvasList.get(data.id).pos = data.pos;
+        //     canvasList.get(data.id).canvas.style.left = `${data.pos.x}px`;
+        //     canvasList.get(data.id).canvas.style.top = `${data.pos.y}px`;
+        // })
 
-        $socketStore.on("layerMoveStart", (data) => {
-            canvasList.get(data.id1).isSelected = true;
-            canvasList.get(data.id1).canvas.style.zIndex = `${zIndex}`;
-            const temp: CanvasData = canvasList.get(data.id1);
+        // $socketStore.on("layerMoveStart", (data) => {
+        //     canvasList.get(data.id1).isSelected = true;
+        //     canvasList.get(data.id1).canvas.style.zIndex = `${zIndex}`;
+        //     const temp: CanvasData = canvasList.get(data.id1);
             
-            zIndex++;
-            canvasList.delete(data.id1);
-            canvasList.set(data.id1, temp);
-            addNewCanvas(data.id2);
-        })
+        //     zIndex++;
+        //     canvasList.delete(data.id1);
+        //     canvasList.set(data.id1, temp);
+        //     addNewCanvas(data.id2);
+        // })
 
-        $socketStore.on("layerMoveEnd", (data) => {
-            canvasList.get(data.id).isSelected = false;
-        })
+        // $socketStore.on("layerMoveEnd", (data) => {
+        //     canvasList.get(data.id).isSelected = false;
+        // })
 
         selectedToolButtonDesign();
 
@@ -186,36 +186,36 @@
             contextMouse.fill();
             contextMouse.closePath();
         } else if (seletedTool === "select-tool") {
-            mouseOnLayerKey = undefined;
-            for (let [key, value] of canvasList) {
-                if (value.isLayer) {
-                    if (value.isSelected) {
-                        contextMouse.strokeStyle = "yellow";
-                    } else {
-                        contextMouse.strokeStyle = "blue";
-                    }
-                    contextMouse.strokeRect(value.pos.x, value.pos.y, value.width, value.height);
-                }
-            }
+            // mouseOnLayerKey = undefined;
+            // for (let [key, value] of canvasList) {
+            //     if (value.isLayer) {
+            //         if (value.isSelected) {
+            //             contextMouse.strokeStyle = "yellow";
+            //         } else {
+            //             contextMouse.strokeStyle = "blue";
+            //         }
+            //         contextMouse.strokeRect(value.pos.x, value.pos.y, value.width, value.height);
+            //     }
+            // }
             
-            if (mySelectedLayerKey === undefined) {
-                for (let [key, value] of canvasList) {
-                    if (value.isLayer && !value.isSelected) {
-                        if (value.pos.x < myData.pos.x 
-                            && myData.pos.x < value.pos.x + value.width
-                            && value.pos.y < myData.pos.y 
-                            && myData.pos.y < value.pos.y + value.height
-                        ) {
-                            contextMouse.strokeStyle = "green";
-                            contextMouse.strokeRect(value.pos.x, value.pos.y, value.width, value.height);
-                            mouseOnLayerKey = key;
-                        }
-                    }
-                }
-            } else {
-                contextMouse.strokeStyle = "green";
-                contextMouse.strokeRect(canvasList.get(mySelectedLayerKey).pos.x, canvasList.get(mySelectedLayerKey).pos.y, canvasList.get(mySelectedLayerKey).width, canvasList.get(mySelectedLayerKey).height);
-            }
+            // if (mySelectedLayerKey === undefined) {
+            //     for (let [key, value] of canvasList) {
+            //         if (value.isLayer && !value.isSelected) {
+            //             if (value.pos.x < myData.pos.x 
+            //                 && myData.pos.x < value.pos.x + value.width
+            //                 && value.pos.y < myData.pos.y 
+            //                 && myData.pos.y < value.pos.y + value.height
+            //             ) {
+            //                 contextMouse.strokeStyle = "green";
+            //                 contextMouse.strokeRect(value.pos.x, value.pos.y, value.width, value.height);
+            //                 mouseOnLayerKey = key;
+            //             }
+            //         }
+            //     }
+            // } else {
+            //     contextMouse.strokeStyle = "green";
+            //     contextMouse.strokeRect(canvasList.get(mySelectedLayerKey).pos.x, canvasList.get(mySelectedLayerKey).pos.y, canvasList.get(mySelectedLayerKey).width, canvasList.get(mySelectedLayerKey).height);
+            // }
         }
     }
 
@@ -226,21 +226,21 @@
             isDown = true;
         }
 
-        if (seletedTool === "select-tool") {
-            isDown = true;
-            mySelectedLayerKey = mouseOnLayerKey;
-            if (mySelectedLayerKey) {
-                canvasList.get(mySelectedLayerKey).isSelected = true;
-                canvasList.get(mySelectedLayerKey).canvas.style.zIndex = `${zIndex}`;
-                zIndex++;
-                const mySelectedLayer = canvasList.get(mySelectedLayerKey);
-                canvasList.delete(mySelectedLayerKey);
-                canvasList.set(mySelectedLayerKey, mySelectedLayer);
-                const id = nanoid();
-                addNewCanvas(id);
-                $socketStore.emit("layerMoveStart", { roomId: roomId, user: myData, id1: mySelectedLayer.id, id2: id});
-            }
-        }
+        // if (seletedTool === "select-tool") {
+        //     isDown = true;
+        //     mySelectedLayerKey = mouseOnLayerKey;
+        //     if (mySelectedLayerKey) {
+        //         canvasList.get(mySelectedLayerKey).isSelected = true;
+        //         canvasList.get(mySelectedLayerKey).canvas.style.zIndex = `${zIndex}`;
+        //         zIndex++;
+        //         const mySelectedLayer = canvasList.get(mySelectedLayerKey);
+        //         canvasList.delete(mySelectedLayerKey);
+        //         canvasList.set(mySelectedLayerKey, mySelectedLayer);
+        //         const id = nanoid();
+        //         addNewCanvas(id);
+        //         $socketStore.emit("layerMoveStart", { roomId: roomId, user: myData, id1: mySelectedLayer.id, id2: id});
+        //     }
+        // }
 
         if (drawingOn && seletedTool === "brush-tool") {
             myData.isDrawing = true;
@@ -268,13 +268,13 @@
 
     const mouseUpEvent = (e: MouseEvent) => {
         e.preventDefault();
-        if (seletedTool === "select-tool" && isDown) {
-            if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
-                canvasList.get(mySelectedLayerKey).isSelected = false;
-                $socketStore.emit("layerMoveEnd", { roomId: roomId, user: myData, id: mySelectedLayerKey });
-                mySelectedLayerKey = undefined;
-            }
-        }
+        // if (seletedTool === "select-tool" && isDown) {
+        //     if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
+        //         canvasList.get(mySelectedLayerKey).isSelected = false;
+        //         $socketStore.emit("layerMoveEnd", { roomId: roomId, user: myData, id: mySelectedLayerKey });
+        //         mySelectedLayerKey = undefined;
+        //     }
+        // }
         isDown = false;
         myData.isDrawing = false;
     }
@@ -287,16 +287,16 @@
             canvasBox.style.top = `${canvasBox.offsetTop + (e.clientY - canvasBox.offsetTop) - myData.pos.y}px`;
         }
 
-        if (seletedTool === "select-tool" && isDown) {
-            if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
-                canvasList.get(mySelectedLayerKey).pos.x += (e.clientX - canvasBox.offsetLeft) - myData.pos.x;
-                canvasList.get(mySelectedLayerKey).pos.y += (e.clientY - canvasBox.offsetTop) - myData.pos.y;
-                canvasList.get(mySelectedLayerKey).canvas.style.left = `${canvasList.get(mySelectedLayerKey).pos.x}px`;
-                canvasList.get(mySelectedLayerKey).canvas.style.top = `${canvasList.get(mySelectedLayerKey).pos.y}px`;
+        // if (seletedTool === "select-tool" && isDown) {
+        //     if (mySelectedLayerKey !== undefined && canvasList.get(mySelectedLayerKey) !== undefined) {
+        //         canvasList.get(mySelectedLayerKey).pos.x += (e.clientX - canvasBox.offsetLeft) - myData.pos.x;
+        //         canvasList.get(mySelectedLayerKey).pos.y += (e.clientY - canvasBox.offsetTop) - myData.pos.y;
+        //         canvasList.get(mySelectedLayerKey).canvas.style.left = `${canvasList.get(mySelectedLayerKey).pos.x}px`;
+        //         canvasList.get(mySelectedLayerKey).canvas.style.top = `${canvasList.get(mySelectedLayerKey).pos.y}px`;
                 
-                $socketStore.emit("layerMove", {roomId, user: myData, id: mySelectedLayerKey, pos: canvasList.get(mySelectedLayerKey).pos});
-            }
-        }
+        //         $socketStore.emit("layerMove", {roomId, user: myData, id: mySelectedLayerKey, pos: canvasList.get(mySelectedLayerKey).pos});
+        //     }
+        // }
 
         const data: UserData = {
             id: $socketStore.id,
@@ -617,55 +617,55 @@
         a.remove();
     }
 
-    const loadImage = (imageSrc: string, id1: string, id2: string) => {
-        const img = new Image();
-        img.onload = function() {
-            const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
-            const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
+    // const loadImage = (imageSrc: string, id1: string, id2: string) => {
+    //     const img = new Image();
+    //     img.onload = function() {
+    //         const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    //         const tempCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
 
-            let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
-            tempCanvas.width = img.width * scale;
-            tempCanvas.height = img.height * scale;
-            tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
-            canvasBox.insertBefore(tempCanvas, canvasBox.children[1]);
-            tempCanvas.style.position = "absolute";
-            tempCanvas.style.zIndex = `${zIndex}`;
+    //         let scale = Math.min(1, 2000 / img.width, 2000 / img.height);
+    //         tempCanvas.width = img.width * scale;
+    //         tempCanvas.height = img.height * scale;
+    //         tempCtx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
+    //         canvasBox.insertBefore(tempCanvas, canvasBox.children[1]);
+    //         tempCanvas.style.position = "absolute";
+    //         tempCanvas.style.zIndex = `${zIndex}`;
             
-            zIndex++;
-            tempCanvas.style.top = "0";
-            tempCanvas.style.left = "0";
-            tempCanvas.style.margin = "0";
-            tempCanvas.style.padding = "0";
+    //         zIndex++;
+    //         tempCanvas.style.top = "0";
+    //         tempCanvas.style.left = "0";
+    //         tempCanvas.style.margin = "0";
+    //         tempCanvas.style.padding = "0";
 
-            canvasList.set(id1, {
-                id: id1,
-                pos: {x: 0, y: 0},
-                width: tempCanvas.width,
-                height: tempCanvas.height,
-                canvas: tempCanvas,
-                ctx: tempCtx,
-                isLayer: true,
-                isSelected: false
-            })
+    //         canvasList.set(id1, {
+    //             id: id1,
+    //             pos: {x: 0, y: 0},
+    //             width: tempCanvas.width,
+    //             height: tempCanvas.height,
+    //             canvas: tempCanvas,
+    //             ctx: tempCtx,
+    //             isLayer: true,
+    //             isSelected: false
+    //         })
 
-            addNewCanvas(id2);
-        }
-        img.src = imageSrc;
-    }
+    //         addNewCanvas(id2);
+    //     }
+    //     img.src = imageSrc;
+    // }
 
-    const loadEvent = (e) => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const src = event.target.result as string;
-            const id1 = nanoid();
-            const id2 = nanoid();
-            loadImage(src, id1, id2);
-            $socketStore.emit("loadImage", { roomId: roomId, user: myData, image: src, id1, id2 });
-        }
-        if (e.target.files[0]) {
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    }
+    // const loadEvent = (e) => {
+    //     const reader = new FileReader();
+    //     reader.onload = function(event) {
+    //         const src = event.target.result as string;
+    //         const id1 = nanoid();
+    //         const id2 = nanoid();
+    //         loadImage(src, id1, id2);
+    //         $socketStore.emit("loadImage", { roomId: roomId, user: myData, image: src, id1, id2 });
+    //     }
+    //     if (e.target.files[0]) {
+    //         reader.readAsDataURL(e.target.files[0]);
+    //     }
+    // }
 
     const toolButtonEvent = (e: any) => {
         seletedTool = e.target.id;
@@ -765,8 +765,8 @@
         <button id="clear" class="menu-item" on:click={clearButtonEvent}>Clear</button>
         <button id="new-board" class="menu-item" on:click={newBoardButtonEvent}>New Board</button>
         <button id="save" class="menu-item" on:click={saveEvent}>Save</button>
-        <button id="load" class="menu-item" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
-        <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/>
+        <!-- <button id="load" class="menu-item" on:click={() => {document.getElementById("imageLoader").click();}}>Load</button>
+        <input type="file" id="imageLoader" on:change={loadEvent} accept="image/*" style="display: none;"/> -->
     {/if}
 </div>
 

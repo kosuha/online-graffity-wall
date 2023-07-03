@@ -88,37 +88,37 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.broadcast.to(data.roomId).emit('clear');
     }
 
-    @SubscribeMessage('loadImage')
-    handleLoadImage(client: Socket, data: any) {
-        if (data.roomId === "lobby") return ;
-        if (!this.appService.isValidUser(data.roomId, data.user)) return;
-        this.appService.loadImage(data.roomId, data.image, data.id1, data.id2);
-        client.broadcast.to(data.roomId).emit('loadImage', {id1: data.id1, id2: data.id2, image: data.image});
-    }
+    // @SubscribeMessage('loadImage')
+    // handleLoadImage(client: Socket, data: any) {
+    //     if (data.roomId === "lobby") return ;
+    //     if (!this.appService.isValidUser(data.roomId, data.user)) return;
+    //     this.appService.loadImage(data.roomId, data.image, data.id1, data.id2);
+    //     client.broadcast.to(data.roomId).emit('loadImage', {id1: data.id1, id2: data.id2, image: data.image});
+    // }
 
-    @SubscribeMessage('layerMoveStart')
-    handleLayerMoveStart(client: Socket, data: any) {
-        if (data.roomId === "lobby") return ;
-        if (!this.appService.isValidUser(data.roomId, data.user)) return;
-        this.appService.layerMoveStart(data.roomId, data.id1, data.id2);
-        client.broadcast.to(data.roomId).emit('layerMoveStart', {id1: data.id1, id2: data.id2});
-    }
+    // @SubscribeMessage('layerMoveStart')
+    // handleLayerMoveStart(client: Socket, data: any) {
+    //     if (data.roomId === "lobby") return ;
+    //     if (!this.appService.isValidUser(data.roomId, data.user)) return;
+    //     this.appService.layerMoveStart(data.roomId, data.id1, data.id2);
+    //     client.broadcast.to(data.roomId).emit('layerMoveStart', {id1: data.id1, id2: data.id2});
+    // }
 
-    @SubscribeMessage('layerMove')
-    handleLayerMove(client: Socket, data: any) {
-        if (data.roomId === "lobby") return ;
-        if (!this.appService.isValidUser(data.roomId, data.user)) return;
+    // @SubscribeMessage('layerMove')
+    // handleLayerMove(client: Socket, data: any) {
+    //     if (data.roomId === "lobby") return ;
+    //     if (!this.appService.isValidUser(data.roomId, data.user)) return;
         
-        this.appService.layerMove(data.roomId, data.id, data.pos);
-        client.broadcast.to(data.roomId).emit('layerMove', {id: data.id, pos: data.pos});
-    }
+    //     this.appService.layerMove(data.roomId, data.id, data.pos);
+    //     client.broadcast.to(data.roomId).emit('layerMove', {id: data.id, pos: data.pos});
+    // }
 
-    @SubscribeMessage('layerMoveEnd')
-    handleLayerMoveEnd(client: Socket, data: any) {
-        if (data.roomId === "lobby") return ;
-        if (!this.appService.isValidUser(data.roomId, data.user)) return;
+    // @SubscribeMessage('layerMoveEnd')
+    // handleLayerMoveEnd(client: Socket, data: any) {
+    //     if (data.roomId === "lobby") return ;
+    //     if (!this.appService.isValidUser(data.roomId, data.user)) return;
         
-        this.appService.layerMoveEnd(data.roomId, data.id);
-        client.broadcast.to(data.roomId).emit('layerMoveEnd', {id: data.id});
-    }
+    //     this.appService.layerMoveEnd(data.roomId, data.id);
+    //     client.broadcast.to(data.roomId).emit('layerMoveEnd', {id: data.id});
+    // }
 }

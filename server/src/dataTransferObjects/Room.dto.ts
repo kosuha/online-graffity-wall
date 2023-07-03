@@ -53,9 +53,21 @@ export class Room {
             newCanvas.ctx.drawImage(img, 0, 0, img.width, img.height);
             this.canvasList.set(id1, newCanvas);
             this.canvasList.set(id2, new CanvasData({x: 0, y: 0}, 2000, 2000, false));
+
+            // Event listener 제거
+            img.onload = null;
+            img.onerror = null;
+
+            // Image 객체 메모리 해제
+            img.src = '';
+            img = null;
         }
         img.onerror = (error) => {
             console.error('Image loading error: ', error);
+            img.onload = null;
+            img.onerror = null;
+            img.src = '';
+            img = null;
         }
         img.src = image;
     }
