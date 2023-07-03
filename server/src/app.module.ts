@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { join } from 'path';
@@ -7,6 +7,7 @@ import { EventsGateway } from './event.gateway';
 import { UserRepository } from './repositories/user.repository';
 import { ConfigModule } from '@nestjs/config';
 import { RoomRepository } from './repositories/room.repository';
+import { rateLimit } from 'express-rate-limit';
 
 @Module({
   imports: [
@@ -34,4 +35,16 @@ import { RoomRepository } from './repositories/room.repository';
     RoomRepository
   ],
 })
-export class AppModule {}
+
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(
+        rateLimit({
+          windowMs: 1 * 60 * 1000, // 1 minutes
+          max: 60, // limit each IP to 60 requests per windowMs
+        }),
+      )
+      .forRoutes('*');
+  }
+}
